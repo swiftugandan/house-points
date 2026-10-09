@@ -56,7 +56,7 @@ public class SyncSession(
         transport.send(ownHello)
 
         val peerHelloFrame = receive() ?: return interrupted("no HELLO from peer")
-        val peerHelloBody = expect(peerHelloFrame, Wire.HELLO) ?: return rejected(RejectReason.PROTOCOL_ERROR, "expected HELLO")
+        val peerHelloBody = bodyOf(peerHelloFrame, Wire.HELLO) ?: return rejected(RejectReason.PROTOCOL_ERROR, "expected HELLO")
         val peer = Wire.readHello(peerHelloBody) ?: return rejected(RejectReason.PROTOCOL_ERROR, "unreadable HELLO")
         when {
             peer.protocol != PROTOCOL -> return rejected(RejectReason.PROTOCOL_VERSION, "peer speaks protocol ${peer.protocol}")
@@ -73,7 +73,7 @@ public class SyncSession(
 
         transport.send(Wire.frame(Wire.AUTH, proof(macKey, transcript, self)))
         val peerAuthFrame = receive() ?: return interrupted("no AUTH from peer")
-        val peerProof = expect(peerAuthFrame, Wire.AUTH) ?: return rejected(RejectReason.PROTOCOL_ERROR, "expected AUTH")
+        val peerProof = bodyOf(peerAuthFrame, Wire.AUTH) ?: return rejected(RejectReason.PROTOCOL_ERROR, "expected AUTH")
         if (!MessageDigest.isEqual(peerProof, proof(macKey, transcript, peer.device))) {
             return rejected(RejectReason.AUTHENTICATION_FAILED, "peer does not hold this family's key")
         }
@@ -122,17 +122,19 @@ public class SyncSession(
                 is Sealed.Failure -> return next.outcome
             }
             when (frame.type) {
-                Wire.OPS -> {
-                    val ops = Wire.readOps(frame.body) ?: return rejected(RejectReason.PROTOCOL_ERROR, "unreadable OPS")
-                    if (ops.any { it.familyId != familyId }) {
-                        return rejected(RejectReason.PROTOCOL_ERROR, "peer sent ops from another family")
-                    }
-                    received.addAndGet(log.append(ops).added)
-                }
+                Wire.OPS -> storeBatch(frame.body)?.let { return it }
                 Wire.DONE -> return if (Wire.readDone(frame.body) != null) null else rejected(RejectReason.PROTOCOL_ERROR, "unreadable DONE")
                 else -> return rejected(RejectReason.PROTOCOL_ERROR, "unexpected frame type ${frame.type}")
             }
         }
+    }
+
+    /** Appends one OPS batch; returns the outcome that ends the session if the batch is unacceptable. */
+    private suspend fun storeBatch(body: ByteArray): SyncOutcome? {
+        val ops = Wire.readOps(body) ?: return rejected(RejectReason.PROTOCOL_ERROR, "unreadable OPS")
+        if (ops.any { it.familyId != familyId }) return rejected(RejectReason.PROTOCOL_ERROR, "peer sent ops from another family")
+        received.addAndGet(log.append(ops).added)
+        return null
     }
 
     private sealed interface Sealed {
@@ -152,7 +154,7 @@ public class SyncSession(
 
     private suspend fun receive(): ByteArray? = withTimeoutOrNull(receiveTimeoutMs) { transport.receive() }
 
-    private fun expect(frame: ByteArray, type: Byte): ByteArray? =
+    private fun bodyOf(frame: ByteArray, type: Byte): ByteArray? =
         Wire.parse(frame)?.takeIf { it.first == type }?.second
 
     private fun proof(macKey: ByteArray, transcript: ByteArray, device: DeviceId): ByteArray =

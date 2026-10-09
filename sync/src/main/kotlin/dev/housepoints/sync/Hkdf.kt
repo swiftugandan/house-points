@@ -9,6 +9,7 @@ internal object Hkdf {
     private const val ALGORITHM = "HmacSHA256"
     private const val HASH_BYTES = 32
 
+    /** [length] must not exceed 255 × 32 bytes (RFC 5869 §2.3); every caller asks for 64. */
     fun derive(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
         val mac = Mac.getInstance(ALGORITHM)
         mac.init(SecretKeySpec(if (salt.isEmpty()) ByteArray(HASH_BYTES) else salt, ALGORITHM))
