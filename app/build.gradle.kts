@@ -32,7 +32,13 @@ android {
     }
 
     buildTypes {
+        // Debug builds install alongside the release, so testing never wipes a family's real data.
+        debug {
+            applicationIdSuffix = ".debug"
+            resValue("string", "app_name", "House Points (debug)")
+        }
         release {
+            resValue("string", "app_name", "House Points")
             signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true

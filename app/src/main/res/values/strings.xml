@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">House Points</string>
     <string name="payday_channel">Payday</string>
     <string name="payday_channel_description">A reminder when the week closes and interest is paid.</string>
 </resources>
