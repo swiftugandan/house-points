@@ -85,7 +85,10 @@ There are no cycles. `:ledger` and `:sync` are independent of each other, and on
 
 - **Built:** locked savings, the rewards shop and the widget.
 - **Tests:** `:ledger` passes L1 to L3, R1 and the cross-version invariant, and `:app` covers the actions, presentation and repository settling.
-- **On the device:** locks, rewards and the child views were exercised. The widget is registered but hasn't been placed on a home screen yet.
+- **On the device:**
+  - Locks, early breaks, rewards and the child views were exercised.
+  - The widget was placed on a home screen. It updates live, including a reversal within seconds; its taps open Record and an account; it switches between light and dark.
+  - The narrow strip layout hasn't been viewed on the device yet.
 
 ## Deferred (recorded, not forgotten)
 

@@ -33,20 +33,22 @@ import dev.housepoints.app.ui.format.Formats
 import dev.housepoints.app.ui.onboarding.AddChildrenScreen
 import dev.housepoints.app.ui.onboarding.StarterJobsScreen
 import dev.housepoints.app.ui.record.RecordSheet
+import dev.housepoints.app.ui.record.RecordTab
 import dev.housepoints.app.ui.theme.Hp
+import dev.housepoints.app.widget.WidgetLink
 import dev.housepoints.contracts.DeviceUpsert
 import dev.housepoints.ledger.FamilyState
 import java.util.Locale
 
 /** What the app shows, decided by whether this phone has a family, a key, or neither. */
 @Composable
-fun AppNavigation(graph: AppGraph, family: FamilyViewModel, snapshot: FamilySnapshot) {
+fun AppNavigation(graph: AppGraph, family: FamilyViewModel, snapshot: FamilySnapshot, link: WidgetLink?, onLinkHandled: () -> Unit) {
     val key by graph.key.collectAsState()
     when {
         snapshot is FamilySnapshot.Loading || key is KeyState.Loading -> Unit
         snapshot is FamilySnapshot.NoFamily && key is KeyState.Held -> JoiningFlow(graph, key as KeyState.Held)
         snapshot is FamilySnapshot.NoFamily -> OnboardingFlow(graph, family)
-        snapshot is FamilySnapshot.Ready -> SetupGate(graph, family, snapshot.state) { FamilyFlow(graph, family, snapshot.state) }
+        snapshot is FamilySnapshot.Ready -> SetupGate(graph, family, snapshot.state) { FamilyFlow(graph, family, snapshot.state, link, onLinkHandled) }
     }
 }
 
@@ -91,7 +93,7 @@ private fun SetupGate(graph: AppGraph, family: FamilyViewModel, state: FamilySta
 }
 
 @Composable
-private fun FamilyFlow(graph: AppGraph, family: FamilyViewModel, state: FamilyState) {
+private fun FamilyFlow(graph: AppGraph, family: FamilyViewModel, state: FamilyState, link: WidgetLink?, onLinkHandled: () -> Unit) {
     val settings = state.family ?: return
     val locale = Locale.getDefault()
     val formats = remember(settings.zone, locale) { Formats(locale, settings.zone) }
@@ -114,6 +116,17 @@ private fun FamilyFlow(graph: AppGraph, family: FamilyViewModel, state: FamilySt
         lastSync = lastSync,
         record = { record = it },
     )
+    // SPEC FR-44: a widget tap opens Record or that child's account, once the family screens exist.
+    LaunchedEffect(link) {
+        when (link) {
+            null -> return@LaunchedEffect
+            WidgetLink.Record -> record = RecordRequest(null, RecordTab.CHORE)
+            is WidgetLink.Account -> if (state.child(link.child) != null) {
+                nav.navigate(Routes.account(link.child)) { popUpTo(Routes.HOME) { inclusive = false } }
+            }
+        }
+        onLinkHandled()
+    }
     Box(Modifier.fillMaxSize()) {
         NavHost(nav, startDestination = Routes.HOME) { familyDestinations(scope) }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = SNACKBAR_CLEARANCE)) { data ->
