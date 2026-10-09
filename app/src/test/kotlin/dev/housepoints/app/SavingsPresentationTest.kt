@@ -6,6 +6,7 @@ import dev.housepoints.app.family.FamilyActions
 import dev.housepoints.app.ui.account.AccountModels
 import dev.housepoints.app.ui.format.Formats
 import dev.housepoints.app.ui.home.HomeModels
+import dev.housepoints.app.ui.payday.Statements
 import dev.housepoints.contracts.ChildId
 import dev.housepoints.contracts.CurrencyCode
 import dev.housepoints.contracts.DeviceId
@@ -99,6 +100,23 @@ class SavingsPresentationTest {
         val ada = adaWithLock()
         val view = ChildViews.from(state("2026-10-20T09:00"), ada, LocalDate.of(2026, 10, 20), formats)!!
         assertEquals("500 locked away until Mon 16 Nov, growing to about ${Locks.forChild(state("2026-10-20T09:00"), ada).single().payout.value}", view.lockedLine)
+    }
+
+    @Test
+    fun `a broken lock coming back is not counted as earned this week`() {
+        val ada = adaWithLock()
+        record(FamilyActions.breakLock(Locks.forChild(state("2026-10-21T18:00"), ada).single(), at("2026-10-21T18:00")))
+        val home = HomeModels.from(state("2026-10-22T09:00"), LocalDate.of(2026, 10, 22), formats, Locale.UK)
+        assertEquals("Nothing yet this week", home.children.single { it.id == ada }.weekLine)
+    }
+
+    @Test
+    fun `the payday statement shows locking as its own line and still adds up`() {
+        val ada = adaWithLock()
+        val statement = Statements.from(state("2026-10-20T09:00"), ada, LocalDate.of(2026, 10, 12), formats, Locale.UK)!!
+        assertEquals(formats.signed(Points.ZERO), statement.spent)
+        assertEquals(formats.signed(Points(-500)), statement.locked)
+        assertEquals(null, statement.earnedDetail)
     }
 
     private companion object {
