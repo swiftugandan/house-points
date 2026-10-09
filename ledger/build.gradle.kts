@@ -15,7 +15,7 @@ dependencies {
 
 tasks.test {
     // Timing-based checks are machine-dependent; they live in the benchmark task below.
-    exclude("**/*Benchmark*")
+    exclude("**/SizingBenchmark*")
 }
 
 val benchmark by tasks.registering(Test::class) {
@@ -23,7 +23,7 @@ val benchmark by tasks.registering(Test::class) {
     group = "verification"
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
-    include("**/*Benchmark*")
+    include("**/SizingBenchmark*")
     maxHeapSize = "2g"
     testLogging { showStandardStreams = true }
 }

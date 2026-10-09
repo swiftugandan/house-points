@@ -9,7 +9,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
-class GoalsAndBenchmarkTest {
+class GoalProjectionsTest {
     /**
      * Balance exactly 252 at Thu 22 Oct with 252 the lowest of the current week: interest is switched off until
      * that week so earlier paydays do not move the starting point of the independent simulation.
