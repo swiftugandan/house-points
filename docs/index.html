@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>House Points · a family bank on the parents' phones</title>
+<meta name="description" content="Children earn points for jobs and for the way they treat people. Points grow with interest while they're left alone, and can be swapped for real money. Android, no account, no internet.">
+<meta property="og:title" content="House Points">
+<meta property="og:description" content="A family bank on the parents' phones. Earn, grow, cash out.">
+<meta property="og:image" content="img/home.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E6B4E'/%3E%3Cpath d='M24 14v4c0 3-10 5-10 12v16c0 4 3 6 6 6h24c3 0 6-2 6-6V30c0-7-10-9-10-12v-4' fill='none' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3Cellipse cx='32' cy='46' rx='9' ry='3' fill='%23E3B55B'/%3E%3Cellipse cx='32' cy='41' rx='9' ry='3' fill='%23E3B55B'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #F5F7F6; --surface: #FFFFFF; --sunk: #E9EEEC; --rule: #D3DAD7;
+  --ink: #18232B; --ink-muted: #52606A; --action: #1E6B4E; --on-action: #FFFFFF;
+  --interest: #8A5A00; --child-1: #2456A6; --child-2: #0E6E73; --child-3: #7B3F8C;
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --mono: "Atkinson Hyperlegible Mono", ui-monospace, monospace;
+  --measure: 34rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #121A1F; --surface: #1B252B; --sunk: #243037; --rule: #2C3940;
+    --ink: #E6EDEA; --ink-muted: #A3B1AB; --action: #6CC9A0; --on-action: #0D1A14;
+    --interest: #E3B55B; --child-1: #8DB4F2; --child-2: #6FCFD3; --child-3: #D3A2E0;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 var(--body); }
+a { color: var(--action); text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2px; }
+img { display: block; max-width: 100%; height: auto; }
+.wrap { width: min(72rem, 100% - 2rem); margin-inline: auto; }
+
+header.site { border-bottom: 1px solid var(--rule); }
+header.site .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 4rem; flex-wrap: wrap; }
+.wordmark { font: 700 1.375rem/1 var(--display); color: var(--ink); text-decoration: none; display: flex; align-items: center; gap: 0.625rem; }
+.wordmark svg { width: 1.75rem; height: 1.75rem; flex: none; }
+nav.site { display: flex; gap: 1.25rem; flex-wrap: wrap; font-weight: 700; font-size: 0.9375rem; }
+nav.site a { color: var(--ink-muted); text-decoration: none; padding-block: 0.75rem; }
+nav.site a:hover { color: var(--ink); }
+
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; padding-block: 4.5rem 3.5rem; }
+h1, h2, h3 { font-family: var(--display); color: var(--ink); margin: 0; }
+h1 { font-weight: 700; font-size: clamp(2.5rem, 5.5vw, 4rem); line-height: 1.04; letter-spacing: -0.01em; max-width: 14ch; }
+.lede { font-size: 1.25rem; color: var(--ink-muted); max-width: var(--measure); margin: 1.5rem 0 2rem; }
+.actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+.button { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 3.5rem; padding: 0 1.5rem; border-radius: 12px; background: var(--action); color: var(--on-action); font-weight: 700; text-decoration: none; }
+.button:hover { filter: brightness(1.08); }
+.quiet { display: inline-flex; align-items: center; min-height: 3.5rem; padding: 0 1.25rem; border-radius: 12px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font-weight: 700; text-decoration: none; }
+.small { font-size: 0.9375rem; color: var(--ink-muted); margin-top: 1rem; }
+
+.phone { background: var(--surface); border: 1px solid var(--rule); border-radius: 28px; padding: 10px; max-width: 20rem; margin-inline: auto; }
+.phone img { border-radius: 20px; }
+figure { margin: 0; }
+figcaption { font-size: 0.9375rem; color: var(--ink-muted); margin-top: 0.75rem; text-align: center; }
+
+section { padding-block: 4rem; border-top: 1px solid var(--rule); }
+.section-head { max-width: var(--measure); margin-bottom: 2.25rem; }
+h2 { font-weight: 700; font-size: clamp(1.75rem, 3.2vw, 2.375rem); line-height: 1.12; }
+.section-head p { color: var(--ink-muted); margin: 0.75rem 0 0; }
+
+/* The passbook: how a week works, as ledger lines. */
+.ledger { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; max-width: 46rem; overflow: hidden; }
+.ledger .row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; gap: 1rem; padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--rule); align-items: start; }
+.ledger .row:last-child { border-bottom: 0; }
+.ledger .date, .ledger .amount { font-family: var(--mono); }
+.ledger .date { color: var(--ink-muted); }
+.ledger .what strong { display: block; }
+.ledger .what span { color: var(--ink-muted); font-size: 0.9375rem; }
+.ledger .payday { color: var(--interest); border-top: 3px double var(--interest); }
+.ledger .payday .date, .ledger .payday .what span { color: var(--interest); }
+.ledger .payday .amount { font-weight: 600; }
+.ledger .closing { font-weight: 700; }
+.ledger-note { max-width: 46rem; color: var(--ink-muted); font-size: 0.9375rem; margin-top: 1rem; }
+
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; margin-bottom: 3rem; }
+.step h3 { font-weight: 700; font-size: 1.375rem; margin-bottom: 0.5rem; }
+.step p { margin: 0; color: var(--ink-muted); }
+.step .verb { font-family: var(--mono); font-size: 0.9375rem; color: var(--ink-muted); display: block; margin-bottom: 0.375rem; }
+
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.5rem; align-items: start; }
+.pair .phone { max-width: 17.5rem; }
+.pair h3 { font-weight: 700; font-size: 1.375rem; margin: 1.5rem 0 0.5rem; text-align: center; }
+.pair p { color: var(--ink-muted); text-align: center; max-width: 24rem; margin: 0 auto; }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3rem; align-items: center; }
+.split + .split { margin-top: 4rem; }
+.split.flip > :first-child { order: 2; }
+.split h3 { font-weight: 700; font-size: 1.625rem; margin-bottom: 0.75rem; }
+.split p { color: var(--ink-muted); max-width: var(--measure); margin: 0 0 0.75rem; }
+
+.principles { list-style: none; padding: 0; margin: 0; max-width: 46rem; border-top: 1px solid var(--rule); }
+.principles li { padding: 1rem 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); gap: 1.5rem; }
+.principles strong { font-family: var(--display); font-size: 1.125rem; }
+.principles span { color: var(--ink-muted); }
+
+.install { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3rem; }
+ol.steps-list { margin: 0; padding-left: 1.25rem; }
+ol.steps-list li { margin-bottom: 0.75rem; }
+code, .fingerprint { font-family: var(--mono); font-size: 0.875rem; overflow-wrap: anywhere; }
+.fingerprint { display: block; background: var(--sunk); border-radius: 4px; padding: 0.75rem; margin-top: 0.5rem; color: var(--ink); }
+
+details { border-bottom: 1px solid var(--rule); max-width: 46rem; }
+details:first-of-type { border-top: 1px solid var(--rule); }
+summary { cursor: pointer; font-weight: 700; padding: 1rem 0; min-height: 3rem; list-style-position: outside; }
+details p { margin: 0 0 1rem; color: var(--ink-muted); max-width: var(--measure); }
+
+footer.site { border-top: 1px solid var(--rule); padding-block: 2.5rem 3rem; color: var(--ink-muted); font-size: 0.9375rem; }
+footer.site .wrap { display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+
+@media (max-width: 52rem) {
+  .hero, .split, .install { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+  .split.flip > :first-child { order: 0; }
+  .steps { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .hero { padding-block: 3rem 2.5rem; }
+  section { padding-block: 3rem; }
+}
+@media (max-width: 36rem) {
+  .pair { grid-template-columns: minmax(0, 1fr); }
+  .principles li { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+  .ledger .row { grid-template-columns: 4.25rem minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.75rem 1rem; }
+  nav.site { gap: 1rem; }
+}
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <a class="wordmark" href="#top" aria-label="House Points, home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1E6B4E"/><path d="M24 14v4c0 3-10 5-10 12v16c0 4 3 6 6 6h24c3 0 6-2 6-6V30c0-7-10-9-10-12v-4" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><ellipse cx="32" cy="46" rx="9" ry="3" fill="#E3B55B"/><ellipse cx="32" cy="41" rx="9" ry="3" fill="#E3B55B"/></svg>
+      House Points
+    </a>
+    <nav class="site" aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#children">For children</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#download">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <h1>A family bank on the parents' phones.</h1>
+      <p class="lede">Children earn points for jobs and for the way they treat people. Points grow with interest while they're left alone, and can be swapped for real money whenever they choose.</p>
+      <div class="actions">
+        <a class="button" href="https://github.com/swiftugandan/house-points/releases/latest/download/house-points.apk">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
+          Download for Android
+        </a>
+        <a class="quiet" href="#how">How it works</a>
+      </div>
+      <p class="small">Free. Android 9 or later. No account, no adverts, nothing sent over the internet.</p>
+    </div>
+    <figure class="phone">
+      <img src="img/home.png" width="540" height="1043" alt="The home screen: three children with their balances, the jobs due today, and a Record button.">
+    </figure>
+  </div>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Earn. Leave it alone. Watch it grow.</h2>
+        <p>The whole idea fits in one week of a child's account.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><span class="verb">Earn</span><h3>Jobs and kindness</h3><p>Paid jobs, bounty jobs anyone can do, and awards for honesty, effort or courage, each with a note in your own words.</p></div>
+        <div class="step"><span class="verb">Grow</span><h3>1% a week</h3><p>Paid every Monday on the smallest amount held all week, so points have to stay in to count. A child sees it move.</p></div>
+        <div class="step"><span class="verb">Cash out</span><h3>Real money, from you</h3><p>When a child wants to spend, you record the cash-out and hand over the money. The app never touches real money.</p></div>
+      </div>
+      <div class="ledger" role="table" aria-label="Ada's week, as it appears in her account">
+        <div class="row" role="row"><span class="date" role="cell">Mon 12</span><span class="what" role="cell"><strong>Started the week</strong></span><span class="amount" role="cell">250</span></div>
+        <div class="row" role="row"><span class="date" role="cell">Tue 13</span><span class="what" role="cell"><strong>Washed the car</strong><span>Bounty job</span></span><span class="amount" role="cell">+100</span></div>
+        <div class="row" role="row"><span class="date" role="cell">Wed 14</span><span class="what" role="cell"><strong>Award · Honesty</strong><span>Told us about the broken plate.</span></span><span class="amount" role="cell">+30</span></div>
+        <div class="row" role="row"><span class="date" role="cell">Thu 15</span><span class="what" role="cell"><strong>Cash out</strong><span>£1.50 paid</span></span><span class="amount" role="cell">−150</span></div>
+        <div class="row payday" role="row"><span class="date" role="cell">Mon 19</span><span class="what" role="cell"><strong>Payday · 1% of 230</strong><span>The smallest balance all week</span></span><span class="amount" role="cell">+2.30</span></div>
+        <div class="row closing" role="row"><span class="date" role="cell"></span><span class="what" role="cell">Now in the account</span><span class="amount" role="cell">232</span></div>
+      </div>
+      <p class="ledger-note">The defaults: 1 point is worth a penny, interest is 1% a week on up to 2,000 points, and only this week's earnings can ever be taken away. Every family can change them.</p>
+    </div>
+  </section>
+
+  <section id="children">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Made for the child holding the phone.</h2>
+        <p>Hand the phone over and it shows just their account, pinned to the screen. Leaving needs your fingerprint or PIN.</p>
+      </div>
+      <div class="pair">
+        <figure>
+          <div class="phone"><img src="img/jar.png" width="540" height="981" alt="Picture style: a jar holding five coins, with a dashed line and a kite marking the savings goal."></div>
+          <h3>Pictures, for early readers</h3>
+          <p>A jar that fills with coins, a line for the goal, and one sentence that's read aloud at a tap.</p>
+        </figure>
+        <figure>
+          <div class="phone"><img src="img/numbers.png" width="540" height="940" alt="Number style: 25 points, a 'What if I wait?' slider showing 32 points after 26 weeks, of which 7 are interest."></div>
+          <h3>Numbers, for older children</h3>
+          <p>The real figures, the full history, and a "what if I wait?" slider that only ever counts interest.</p>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="parents">
+    <div class="wrap">
+      <div class="split">
+        <figure class="phone"><img src="img/record.png" width="540" height="1043" alt="The Record sheet: choose children, choose a chore, award, cash-out or deduction, and when it happened."></figure>
+        <div>
+          <h3>Recorded in five seconds</h3>
+          <p>Tap a due job on the home screen and it's done, with an Undo. Or open Record for awards, cash-outs and anything that happened earlier in the week.</p>
+          <p>The button always says what will happen: "Add 20 to Tom", "Pay Ada £2.00".</p>
+        </div>
+      </div>
+      <div class="split flip">
+        <div>
+          <h3>A history nobody can rewrite</h3>
+          <p>Nothing is ever edited or deleted. A mistake is reversed with a reason, and both entries stay in the record, so children can trust what they see.</p>
+          <p>Every week closes with a payday line that says exactly what the interest was paid on.</p>
+        </div>
+        <figure class="phone"><img src="img/account.png" width="540" height="1043" alt="A child's account: balance, the payday note, unpaid everyday jobs with tick boxes, and this week's entries."></figure>
+      </div>
+      <div class="split">
+        <figure class="phone"><img src="img/home-dark.png" width="540" height="1043" alt="The home screen in dark mode."></figure>
+        <div>
+          <h3>Both parents, always agreeing</h3>
+          <p>Phones on the same Wi-Fi keep each other up to date by themselves while the app is open. Away from home, they can sync over Bluetooth.</p>
+          <p>Two phones holding the same entries always show the same balances, to the penny.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="principles">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>A bank, not a game.</h2>
+        <p>Some things are left out on purpose.</p>
+      </div>
+      <ul class="principles">
+        <li><strong>No streaks or badges</strong><span>Rewards children come to expect tend to crowd out their own reasons for doing things. Awards here are occasional and come with a note.</span></li>
+        <li><strong>Savings stay safe</strong><span>By default, taking points away can only touch what was earned this week. If savings could vanish, saving would stop making sense.</span></li>
+        <li><strong>Unpaid jobs exist</strong><span>Making your bed is part of living in a family. It gets ticked, not paid.</span></li>
+        <li><strong>Cash-outs aren't red</strong><span>Spending your own money is a perfectly good thing to do with it.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>It stays in the family.</h2>
+      </div>
+      <ul class="principles">
+        <li><strong>No account, no server</strong><span>There is nowhere for your family's data to go except the parents' phones.</span></li>
+        <li><strong>Encrypted between phones</strong><span>Phones join by scanning a pairing code. Every sync is checked and encrypted with that family key.</span></li>
+        <li><strong>Local network only</strong><span>Android needs the internet permission for any network socket, even inside your home. House Points only talks to phones on your own Wi-Fi, never to the internet.</span></li>
+        <li><strong>Backups you control</strong><span>Android's own backup can keep a copy (end-to-end encrypted with your screen lock), and you can save a passphrase-locked file.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="wrap install">
+      <div>
+        <h2>Install</h2>
+        <ol class="steps-list" style="margin-top: 1.5rem">
+          <li><a href="https://github.com/swiftugandan/house-points/releases/latest/download/house-points.apk">Download the app</a> on each parent's Android phone.</li>
+          <li>Open the file. If asked, allow your browser to install apps.</li>
+          <li>On the first phone, choose "Start a family". On the second, choose "Join the family" and scan the code from the first phone's Settings, Phones.</li>
+        </ol>
+        <p class="small">Needs Android 9 or later. Bluetooth sync uses Google Play services.</p>
+      </div>
+      <div>
+        <h3 style="font-size: 1.25rem">Check it's the real thing</h3>
+        <p class="small" style="margin-top: 0.5rem">Every release is signed with the same key. Its SHA-256 certificate fingerprint is:</p>
+        <code class="fingerprint">D1:B3:C7:CB:46:85:7C:2A:2D:39:82:B5:D4:77:CA:11:BE:C0:26:DB:3C:E1:F5:35:5E:0B:8B:DD:CB:A8:B3:E9</code>
+        <p class="small">Source code, design notes and every release are on <a href="https://github.com/swiftugandan/house-points">GitHub</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="questions">
+    <div class="wrap">
+      <div class="section-head"><h2>Questions</h2></div>
+      <details><summary>Does the app hold or move money?</summary><p>No. It keeps the record. When a child cashes out, a parent hands over the money in whatever way suits the family.</p></details>
+      <details><summary>Is there an iPhone version?</summary><p>Not yet. House Points is Android only.</p></details>
+      <details><summary>What happens if both parents record something while apart?</summary><p>Both entries arrive at the next sync. If that changes a past week's smallest balance, the app says so plainly: "Interest recalculated: −1". If the same job was recorded on both phones, it still counts once.</p></details>
+      <details><summary>Can a child leave the child view?</summary><p>Only with a parent's fingerprint or PIN, provided the phone has a screen lock. Without one, the app tells you before you hand it over.</p></details>
+      <details><summary>What does it cost?</summary><p>Nothing. There are no adverts and no purchases.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>House Points · for families who'd like money to mean something</span>
+    <span>Type: Bricolage Grotesque and Atkinson Hyperlegible, SIL Open Font License</span>
+  </div>
+</footer>
+</body>
+</html>
