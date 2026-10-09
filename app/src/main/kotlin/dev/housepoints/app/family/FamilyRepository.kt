@@ -7,6 +7,7 @@ import dev.housepoints.contracts.Op
 import dev.housepoints.contracts.Payload
 import dev.housepoints.ledger.DecodedOp
 import dev.housepoints.ledger.FamilyState
+import dev.housepoints.ledger.Locks
 import dev.housepoints.ledger.Periods
 import dev.housepoints.ledger.Projection
 import dev.housepoints.sync.OpFactory
@@ -72,7 +73,7 @@ class FamilyRepository(
         scope.launch {
             refreshes.trySend(Unit)
             while (true) {
-                val wakeAt = refresh()
+                val wakeAt = settle()
                 val waitMs = (wakeAt.value - clock.now().value).coerceAtLeast(MIN_WAIT_MS)
                 withTimeoutOrNull(waitMs) { refreshes.receive() }
             }
@@ -106,6 +107,27 @@ class FamilyRepository(
         val ops = opFactory.record(payloads)
         refreshes.trySend(Unit)
         return ops
+    }
+
+    /**
+     * One step of the repository's work: recalculate, then record anything that has fallen due (matured
+     * lock payouts). Returns when the next step is due even if nothing changes.
+     */
+    suspend fun settle(): InstantMs {
+        val wakeAt = refresh()
+        recordDuePayouts()
+        return wakeAt
+    }
+
+    /**
+     * SPEC FR-50: matured lock payouts are recorded by whichever phone sees them first. Their ids are
+     * deterministic, so two phones doing this at once still produce one entry; once recorded they are no
+     * longer due, so this settles after one pass.
+     */
+    private suspend fun recordDuePayouts() {
+        val state = (_snapshot.value as? FamilySnapshot.Ready)?.state ?: return
+        val due = Locks.duePayouts(state)
+        if (due.isNotEmpty()) record(due)
     }
 
     private suspend fun factoryOrNull(): OpFactory? = cacheLock.withLock {

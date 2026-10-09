@@ -17,7 +17,6 @@ import dev.housepoints.app.family.Action
 import dev.housepoints.sync.InMemoryOpLog
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -48,20 +47,22 @@ class RepositoryPayoutTest {
 
         record(FamilyActions.addChild(state(), "Ada", DisplayStyle.NUMBER))
         val ada = state().children.single().id
-        record(FamilyActions.award(setOf(ada), null, Points(1000), "Birthday", now))
+        record(FamilyActions.award(setOf(ada), null, Points(1000), "Birthday", at("2026-10-13T09:00")))
         record(FamilyActions.lock(state(), ada, Points(500), 4, now))
 
-        now = at("2026-11-16T09:00")
-        repository.start(backgroundScope)
-        advanceUntilIdle()
+        suspend fun payouts() = log.all().map { OpCodec.decodePayload(it) }.filterIsInstance<EntryRecorded>().filter { it.lockPayout != null }
 
-        fun payouts() = kotlinx.coroutines.runBlocking { log.all() }
-            .map { OpCodec.decodePayload(it) }.filterIsInstance<EntryRecorded>().filter { it.lockPayout != null }
+        repository.settle()
+        assertEquals("not due before maturity", 0, payouts().size)
+
+        now = at("2026-11-16T09:00")
+        repository.settle()
         assertEquals(1, payouts().size)
         val opsAfterPayout = log.all().size
 
-        repository.invalidate()
-        advanceUntilIdle()
-        assertEquals(opsAfterPayout, log.all().size)
+        repository.settle()
+        repository.settle()
+        assertEquals("settles: nothing more recorded", opsAfterPayout, log.all().size)
+        assertEquals(Points(541), payouts().single().points)
     }
 }
