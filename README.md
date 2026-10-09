@@ -1,5 +1,7 @@
 # House Points
 
+[![CI](https://github.com/swiftugandan/house-points/actions/workflows/ci.yml/badge.svg)](https://github.com/swiftugandan/house-points/actions/workflows/ci.yml)
+
 A family bank that lives on the parents' Android phones.
 - Children earn points for jobs and for behaviour that reflects the family's values.
 - Points earn weekly interest on the smallest balance held all week.
@@ -53,3 +55,7 @@ The release signing key is never in this repository. Release APKs are signed wit
 ## Fonts
 
 Bricolage Grotesque and Atkinson Hyperlegible (Next and Mono) are bundled under the SIL Open Font License. See [licenses/](licenses/).
+
+## Licence
+
+MIT. See [LICENSE](LICENSE). The bundled fonts keep their own SIL Open Font License.

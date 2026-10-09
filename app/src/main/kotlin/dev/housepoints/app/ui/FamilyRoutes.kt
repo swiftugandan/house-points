@@ -1,5 +1,7 @@
 package dev.housepoints.app.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -47,6 +49,9 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.Locale
 import java.util.UUID
+
+/** Where new versions are published; opened in the browser only when the parent asks. */
+private const val RELEASES_URL = "https://github.com/swiftugandan/house-points/releases/latest"
 
 /** Opens the Record sheet, optionally for one child and on a given tab. */
 internal data class RecordRequest(val child: ChildId?, val tab: RecordTab)
@@ -101,7 +106,15 @@ internal fun NavGraphBuilder.familyDestinations(f: FamilyScope) {
 
 private fun NavGraphBuilder.settingsDestinations(f: FamilyScope) {
     composable(Routes.SETTINGS) {
-        SettingsScreen(f.state.family?.name.orEmpty(), onBack = f::back, onOpen = { page -> f.nav.navigate(Routes.settings(page.name.lowercase())) })
+        val context = LocalContext.current
+        val version = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }
+        SettingsScreen(
+            f.state.family?.name.orEmpty(),
+            version = version,
+            onBack = f::back,
+            onOpen = { page -> f.nav.navigate(Routes.settings(page.name.lowercase())) },
+            onCheckForUpdate = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL))) },
+        )
     }
     composable(Routes.settings("children")) {
         var adding by remember { mutableStateOf(false) }
