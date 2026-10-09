@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -81,7 +82,7 @@ fun PictureView(model: ChildViewModel, animate: Boolean, onSpeak: (String) -> Un
             Rule()
             LazyRow(
                 Modifier.fillMaxWidth().background(Hp.colors.surface).navigationBarsPadding(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(Space.l),
+                contentPadding = PaddingValues(Space.l),
                 horizontalArrangement = Arrangement.spacedBy(Space.m),
             ) {
                 items(model.today) { job ->

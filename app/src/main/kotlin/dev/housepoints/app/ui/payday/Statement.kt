@@ -1,5 +1,8 @@
 package dev.housepoints.app.ui.payday
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,9 +26,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import dev.housepoints.app.ui.components.Avatar
 import dev.housepoints.app.ui.components.DoubleRule
 import dev.housepoints.app.ui.components.HpIcons
@@ -38,9 +38,11 @@ import dev.housepoints.app.ui.theme.Radius
 import dev.housepoints.app.ui.theme.Space
 import dev.housepoints.contracts.ChildId
 import dev.housepoints.contracts.EntryKind
+import dev.housepoints.contracts.MinorUnits
 import dev.housepoints.contracts.Points
 import dev.housepoints.ledger.FamilyState
 import dev.housepoints.ledger.Interest
+import dev.housepoints.ledger.LedgerLine
 import dev.housepoints.ledger.PeriodSummary
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -82,7 +84,7 @@ object Statements {
             earned = formats.signed(period.credits),
             earnedDetail = when (earnedCount) { 0 -> null; 1 -> "1 entry"; else -> "$earnedCount entries" },
             spent = formats.signed(period.debits),
-            spentDetail = if (cashedMoney > 0) formats.money(dev.housepoints.contracts.MinorUnits(cashedMoney), family.currency) + " cashed out" else null,
+            spentDetail = if (cashedMoney > 0) formats.money(MinorUnits(cashedMoney), family.currency) + " cashed out" else null,
             interest = if (period.interest.value == 0L) "0" else formats.signedDecimal(period.interest.value),
             interestDetail = interestDetail(period, formats),
             closing = formats.points(period.closing.floorPoints()),
@@ -90,21 +92,24 @@ object Statements {
         )
     }
 
-    private fun interestDetail(period: PeriodSummary, formats: Formats): String = when {
-        period.rate.value == 0 -> "No interest was set for this week"
-        period.base.value <= 0 -> "Nothing stayed in for the whole week"
-        period.cap != null && period.lowest > period.cap!!.toMicropoints() ->
-            "${formats.percent(period.rate.value)} of ${formats.points(period.cap!!)}, the most that earns interest"
-        else -> "${formats.percent(period.rate.value)} of ${formats.points(period.base.floorPoints())}, your smallest balance"
+    private fun interestDetail(period: PeriodSummary, formats: Formats): String {
+        val cap = period.cap
+        return when {
+            period.rate.value == 0 -> "No interest was set for this week"
+            period.base.value <= 0 -> "Nothing stayed in for the whole week"
+            cap != null && period.lowest > cap.toMicropoints() ->
+                "${formats.percent(period.rate.value)} of ${formats.points(cap)}, the most that earns interest"
+            else -> "${formats.percent(period.rate.value)} of ${formats.points(period.base.floorPoints())}, your smallest balance"
+        }
     }
 
-    private fun explanation(state: FamilyState, period: PeriodSummary, inWeek: List<dev.housepoints.ledger.LedgerLine>, formats: Formats, locale: Locale): String {
+    private fun explanation(state: FamilyState, period: PeriodSummary, inWeek: List<LedgerLine>, formats: Formats, locale: Locale): String {
         val zone = requireNotNull(state.family).zone
         val lowest = formats.points(maxOf(Points.ZERO, period.lowest.floorPoints()))
-        val first = if (period.lowestAt == null) {
+        val at = period.lowestAt
+        val first = if (at == null) {
             "Your balance stayed at $lowest or more all week, so that's what earned the interest."
         } else {
-            val at = period.lowestAt!!
             val day = java.time.Instant.ofEpochMilli(at.value).atZone(zone).dayOfWeek.getDisplayName(TextStyle.FULL, locale)
             val what = when (inWeek.firstOrNull { it.entry.effectiveAt == at }?.entry?.kind) {
                 EntryKind.CASH_OUT -> "cash-out"

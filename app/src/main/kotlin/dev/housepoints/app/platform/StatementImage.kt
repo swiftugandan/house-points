@@ -4,21 +4,22 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
 import dev.housepoints.app.R
 import dev.housepoints.app.ui.payday.StatementModel
 import dev.housepoints.app.ui.theme.LightColors
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import androidx.compose.ui.graphics.toArgb
 
 /**
  * Draws a statement to a PNG for the share sheet (SPEC FR-42): the same content and tokens as the screen,
@@ -57,7 +58,7 @@ class StatementImage(private val context: Context) {
         // Avatar disc and title
         val disc = c.child(model.colorIndex).fill.toArgb()
         canvas.drawCircle(left + 48f, y - 24f, 48f, fill(disc))
-        canvas.drawText(model.childName.take(1).uppercase(), left + 48f, y - 4f, text(bricolage, 56f, android.graphics.Color.WHITE, Paint.Align.CENTER))
+        canvas.drawText(model.childName.take(1).uppercase(), left + 48f, y - 4f, text(bricolage, 56f, Color.WHITE, Paint.Align.CENTER))
         canvas.drawText("${model.childName}'s week", left + 124f, y - 20f, text(bricolage, 64f, c.ink.toArgb()))
         canvas.drawText(model.weekLabel, left + 124f, y + 30f, text(atkinson, 36f, c.inkMuted.toArgb()))
         y += 130f

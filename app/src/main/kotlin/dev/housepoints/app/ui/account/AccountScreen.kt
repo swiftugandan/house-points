@@ -1,6 +1,7 @@
 package dev.housepoints.app.ui.account
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -64,11 +66,12 @@ import dev.housepoints.app.ui.theme.Hp
 import dev.housepoints.app.ui.theme.Radius
 import dev.housepoints.app.ui.theme.Space
 import dev.housepoints.contracts.ChildId
+import dev.housepoints.contracts.ChoreId
 import dev.housepoints.contracts.IconKey
 import dev.housepoints.contracts.Points
 import dev.housepoints.ledger.LedgerLine
-import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 @Composable
 fun AccountScreen(
@@ -100,9 +103,9 @@ fun AccountScreen(
                             }
                             ProgressBar(goal.fraction, colors.child(model.colorIndex).fill, "Goal progress ${goal.progress}")
                         }
-                        TextAction("Change goal", onGoal)
+                        TextAction("Change goal", onGoal, inset = false)
                     } else {
-                        TextAction("Set a savings goal", onGoal)
+                        TextAction("Set a savings goal", onGoal, inset = false)
                     }
                     Text(model.paydayLine, style = Hp.type.caption, color = colors.interest)
                 }
@@ -123,7 +126,7 @@ fun AccountScreen(
                         Icon(HpIcons.of(expected.chore.icon), contentDescription = null, tint = colors.ink, modifier = Modifier.size(24.dp))
                         Spacer(Modifier.width(Space.m))
                         Text(expected.chore.title, style = Hp.type.body, color = colors.ink, modifier = Modifier.weight(1f))
-                        if (expected.done) DoneBadge(size = 26.dp) else Box(Modifier.size(26.dp).clip(Radius.medium).background(colors.sunk))
+                        if (expected.done) DoneBadge(size = 26.dp) else Box(Modifier.size(26.dp).border(2.dp, colors.inkMuted, CircleShape))
                     }
                     Rule()
                 }
@@ -145,7 +148,7 @@ fun AccountScreen(
     }
 }
 
-data class ExpectedTick(val child: ChildId, val chore: dev.housepoints.contracts.ChoreId, val done: Boolean)
+data class ExpectedTick(val child: ChildId, val chore: ChoreId, val done: Boolean)
 
 /** One entry, with the only thing you can do to the past: reverse it, with a reason (SPEC FR-16). */
 @OptIn(ExperimentalMaterial3Api::class)

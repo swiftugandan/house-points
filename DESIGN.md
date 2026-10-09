@@ -43,6 +43,7 @@ Neutrals are tinted towards blue-green ink. There's no pure black, pure grey or 
 |---|---|---|
 | `ground` | `#121A1F` | n/a |
 | `surface` | `#1B252B` | n/a |
+| `sunk` | `#243037` | n/a |
 | `rule` | `#2C3940` | n/a |
 | `ink` | `#E6EDEA` | 14.8:1 |
 | `ink-muted` | `#A3B1AB` | 7.9:1 |
@@ -123,7 +124,8 @@ They are drawn once, properly. No placeholder blobs.
 
 **Record sheet.** A bottom sheet, worked from top to bottom:
 1. **Who:** avatar toggles. More than one child can be selected for shared chores.
-2. **What:** a segmented control with Chore, Award, Cash out and Take away. Take away only appears when the penalty mode allows it.
+2. **What:** a segmented control with Chore, Award, Cash out and Deduct. Deduct only appears when the penalty mode allows it. ("Take away" didn't fit four segments at 360 dp.)
+   - **When:** for chores and awards only, Today / Yesterday / Earlier (up to a week back, SPEC FR-17).
 3. **Detail:** a chore list with its value, a value picker with a required note, or the amount.
 4. **Confirm.** One `action` button whose label states the outcome: "Add 20 to Tom", "Pay Ada £2.00". Never "Submit" or "Save".
 
@@ -158,7 +160,7 @@ Cash out shows "Last synced with Sam's phone: 3 days ago" above the button whene
 
 ## Child view: Picture style
 
-- **The jar.** One coin = 10 points. Coins stack in tens, so a full stack is 100 points, or £1 at the default rate. A part-coin is drawn as an empty coin outline with "6 more points to the next coin".
+- **The jar.** It is scaled to the larger of the goal and the balance: big coins and a goal line about three-quarters of the way up for small numbers, five columns of small coins for big ones. One coin = 10 points. Coins stack in tens, so a full stack is 100 points, or £1 at the default rate. A part-coin is drawn as an empty coin outline with "6 more points to the next coin".
 - **The goal** is a horizontal line drawn on the jar at the target height, labelled with the goal's icon. When the coins reach it, the child can have the thing.
 - **This week** is a row of chore icons with ticks. No text is needed.
 - The only text on screen is the child's name and one sentence, at `picture-label` size. The sentence is read aloud on tap.
@@ -189,6 +191,10 @@ Motion is restrained and serves a purpose. Every animation respects the system "
 - Numbers carry units at least once per screen ("204 points").
 - Interest is always described as "1% a week on the smallest amount you had all week".
 - Use a hyphen or "to" for ranges. Keep dashes rare.
+
+## Large text
+
+At a system font scale of 1.5 or more, segmented controls stack into a full-width list rather than clip their labels. Fixed-width labels are not used anywhere (NFR-A11Y-2).
 
 ## Bans
 

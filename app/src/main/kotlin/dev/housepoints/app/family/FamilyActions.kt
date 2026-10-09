@@ -58,6 +58,7 @@ sealed interface Refusal {
     data object AmountMustNotBeZero : Refusal
     data object UnknownChore : Refusal
     data object AlreadyReversed : Refusal
+    data object AlreadyRecorded : Refusal
     data object InvalidPolicy : Refusal
 }
 

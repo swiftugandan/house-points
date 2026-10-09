@@ -12,6 +12,7 @@ object Refusals {
         Refusal.AmountMustNotBeZero -> "The amount can't be zero."
         Refusal.UnknownChore -> "That job no longer exists."
         Refusal.AlreadyReversed -> "This entry has already been reversed."
+        Refusal.AlreadyRecorded -> "That job is already recorded for that day."
         Refusal.InvalidPolicy -> "Those numbers don't make a valid rule."
         is Refusal.Rule -> when (refusal.reason) {
             DenialReason.NO_FAMILY -> "Set up the family first."

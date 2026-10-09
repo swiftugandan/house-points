@@ -28,12 +28,14 @@ import dev.housepoints.app.ui.components.Avatar
 import dev.housepoints.app.ui.components.CircleIconButton
 import dev.housepoints.app.ui.components.HpIcons
 import dev.housepoints.app.ui.components.IconAction
+import dev.housepoints.app.ui.components.NoticeRow
 import dev.housepoints.app.ui.components.OutcomeButton
 import dev.housepoints.app.ui.components.Rule
 import dev.housepoints.app.ui.components.TextAction
 import dev.housepoints.app.ui.theme.Hp
 import dev.housepoints.app.ui.theme.Space
 import dev.housepoints.contracts.ChildId
+import dev.housepoints.contracts.IconKey
 import dev.housepoints.ledger.DueChore
 
 @Composable
@@ -75,7 +77,7 @@ fun HomeScreen(
         LazyColumn(Modifier.weight(1f)) {
             item { Rule() }
             items(notices) { notice ->
-                dev.housepoints.app.ui.components.NoticeRow(
+                NoticeRow(
                     notice,
                     "Entries from the other phone changed a past week's smallest balance, so that week's interest changed too.",
                     action = { TextAction("OK", onDismissNotices) },
@@ -89,7 +91,7 @@ fun HomeScreen(
                     Column(Modifier.fillMaxWidth().background(colors.surface).padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
                         Text("No children yet", style = Hp.type.title, color = colors.ink)
                         Text("Add each child once. Points, interest and history start from their first entry.", style = Hp.type.body, color = colors.inkMuted)
-                        TextAction("Add a child", onAddChild)
+                        TextAction("Add a child", onAddChild, inset = false)
                     }
                     Rule()
                 }
@@ -103,7 +105,7 @@ fun HomeScreen(
                             .clickable(onClick = onBounties).padding(horizontal = Space.l),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(HpIcons.of(dev.housepoints.contracts.IconKey("car")), contentDescription = null, tint = colors.ink, modifier = Modifier.size(24.dp))
+                        Icon(HpIcons.of(IconKey("car")), contentDescription = null, tint = colors.ink, modifier = Modifier.size(24.dp))
                         Spacer(Modifier.width(Space.m))
                         val label = if (model.bountyCount == 1) "1 open bounty job" else "${model.bountyCount} open bounty jobs"
                         Text(label, style = Hp.type.body, color = colors.ink, modifier = Modifier.weight(1f))
@@ -151,7 +153,7 @@ private fun ChildRow(child: HomeChild, onChild: (ChildId) -> Unit, onRecordDue: 
         }
         if (child.due.isNotEmpty()) {
             Row(Modifier.padding(start = 60.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.s)) {
-                Text("Due", style = Hp.type.label, color = colors.inkMuted, modifier = Modifier.width(36.dp))
+                Text("Due", style = Hp.type.label, color = colors.inkMuted)
                 child.due.forEach { due ->
                     CircleIconButton(HpIcons.of(due.icon), due.description, onClick = { onRecordDue(child.id, due.due) })
                 }

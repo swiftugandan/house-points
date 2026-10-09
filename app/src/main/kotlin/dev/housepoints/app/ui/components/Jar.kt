@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -61,6 +62,7 @@ fun Jar(model: JarModel, colour: ChildColor, goalIcon: ImageVector?, description
     val ink = Hp.colors.ink
     val lid = Hp.colors.sunk
     val glass = Hp.colors.surface
+    val layout = remember(model) { JarLayout.of(model) }
     val shown = remember { Animatable(if (animate) (model.coins - NEW_COINS_TO_DROP).coerceAtLeast(0).toFloat() else model.coins.toFloat()) }
     LaunchedEffect(model.coins, animate) {
         if (animate) shown.animateTo(model.coins.toFloat(), tween(durationMillis = DROP_MS * NEW_COINS_TO_DROP, easing = FastOutSlowInEasing))
@@ -72,8 +74,8 @@ fun Jar(model: JarModel, colour: ChildColor, goalIcon: ImageVector?, description
             Canvas(Modifier.fillMaxSize()) {
                 val geometry = JarGeometry(size)
                 drawJar(geometry, ink, lid, glass)
-                drawCoins(geometry, shown.value, model.partial && shown.value >= model.coins, colour, ink)
-                model.goalCoins?.let { drawGoalLine(geometry, it, ink) }
+                drawCoins(geometry, layout, shown.value, model.partial && shown.value >= model.coins, colour, ink)
+                model.goalCoins?.let { drawGoalLine(geometry, layout, it, ink) }
             }
             if (goalIcon != null && model.goalCoins != null) {
                 Box {
@@ -90,7 +92,7 @@ fun Jar(model: JarModel, colour: ChildColor, goalIcon: ImageVector?, description
         layout(width, height) {
             canvas.place(0, 0)
             if (iconPlaceable != null && model.goalCoins != null) {
-                val y = geometry.levelTop(model.goalCoins) - geometry.iconSize / 2
+                val y = geometry.levelTop(layout, model.goalCoins) - geometry.iconSize / 2
                 iconPlaceable.place((geometry.right + geometry.iconGap).toInt(), y.toInt())
             }
         }
@@ -110,20 +112,34 @@ private class JarGeometry(size: Size) {
     val innerLeft = left + 14f * unit
     val innerRight = right - 14f * unit
     val innerBottom = bottom - 12f * unit
-    val levelStep = 6.4f * unit
-    val coinHeight = 12f * unit
     val iconSize = 40f * unit
     val iconGap = 18f * unit
     val stroke = 2.dp
     val unitPx = unit
 
-    fun levelTop(coins: Int): Float {
-        val levels = (coins + JarModel.COLUMNS - 1) / JarModel.COLUMNS
-        return innerBottom - levels * levelStep - coinHeight / 2
+    /** Just above the top of the [coins]-th coin: where the goal line goes. */
+    fun levelTop(layout: JarLayout, coins: Int): Float {
+        val levels = layout.levelsFor(coins).coerceAtLeast(1)
+        return innerBottom - (((levels - 1) * layout.step + layout.coinHeight) * unit).toFloat() - LINE_GAP * unit
+    }
+
+    fun coinTopLeft(layout: JarLayout, index: Int, drop: Float): Offset {
+        val columnWidth = JarLayout.INNER_WIDTH / layout.columns
+        val column = index % layout.columns
+        val level = index / layout.columns
+        val x = innerLeft + ((column * columnWidth + (columnWidth - layout.coinWidth) / 2) * unit).toFloat()
+        val y = innerBottom - ((level * layout.step + layout.coinHeight) * unit).toFloat() - drop
+        return Offset(x, y)
+    }
+
+    fun coinSize(layout: JarLayout): Size = Size((layout.coinWidth * unit).toFloat(), (layout.coinHeight * unit).toFloat())
+
+    private companion object {
+        const val LINE_GAP = 4f
     }
 }
 
-private fun DrawScope.drawJar(g: JarGeometry, ink: androidx.compose.ui.graphics.Color, lid: androidx.compose.ui.graphics.Color, glass: androidx.compose.ui.graphics.Color) {
+private fun DrawScope.drawJar(g: JarGeometry, ink: Color, lid: Color, glass: Color) {
     val u = g.unitPx
     val body = Path().apply {
         moveTo(92f * u, 44f * u)
@@ -143,42 +159,69 @@ private fun DrawScope.drawJar(g: JarGeometry, ink: androidx.compose.ui.graphics.
     drawRoundRect(ink, topLeft = Offset(78f * u, 14f * u), size = Size(124f * u, 30f * u), cornerRadius = CornerRadius(6f * u), style = Stroke(g.stroke.toPx()))
 }
 
-private fun DrawScope.drawCoins(g: JarGeometry, shown: Float, partial: Boolean, colour: ChildColor, ink: androidx.compose.ui.graphics.Color) {
+private fun DrawScope.drawCoins(g: JarGeometry, layout: JarLayout, shown: Float, partial: Boolean, colour: ChildColor, ink: Color) {
     val whole = shown.toInt()
-    val columnWidth = (g.innerRight - g.innerLeft) / JarModel.COLUMNS
-    val coinWidth = columnWidth * 0.86f
-    fun coinTopLeft(index: Int, drop: Float): Offset {
-        val column = index % JarModel.COLUMNS
-        val level = index / JarModel.COLUMNS
-        val x = g.innerLeft + column * columnWidth + (columnWidth - coinWidth) / 2
-        val y = g.innerBottom - level * g.levelStep - g.coinHeight - drop
-        return Offset(x, y)
-    }
+    val size = g.coinSize(layout)
     val strokePx = 1.5.dp.toPx()
-    for (index in 0 until whole) {
-        val topLeft = coinTopLeft(index, 0f)
-        drawOval(colour.fill, topLeft, Size(coinWidth, g.coinHeight))
-        drawOval(ink, topLeft, Size(coinWidth, g.coinHeight), style = Stroke(strokePx))
+    fun coin(topLeft: Offset) {
+        drawOval(colour.fill, topLeft, size)
+        drawOval(ink, topLeft, size, style = Stroke(strokePx))
     }
+    for (index in 0 until whole) coin(g.coinTopLeft(layout, index, 0f))
     val falling = shown - whole
-    if (falling > 0f) {
-        val topLeft = coinTopLeft(whole, (1f - falling) * g.levelStep * 30f)
-        drawOval(colour.fill, topLeft, Size(coinWidth, g.coinHeight))
-        drawOval(ink, topLeft, Size(coinWidth, g.coinHeight), style = Stroke(strokePx))
-    }
+    if (falling > 0f) coin(g.coinTopLeft(layout, whole, (1f - falling) * size.height * DROP_HEIGHT_IN_COINS))
     if (partial) {
         drawOval(
-            colour.accent, coinTopLeft(whole, 0f), Size(coinWidth, g.coinHeight),
+            colour.accent, g.coinTopLeft(layout, whole, 0f), size,
             style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx()))),
         )
     }
 }
 
-private fun DrawScope.drawGoalLine(g: JarGeometry, goalCoins: Int, ink: androidx.compose.ui.graphics.Color) {
-    val y = g.levelTop(goalCoins)
+private fun DrawScope.drawGoalLine(g: JarGeometry, layout: JarLayout, goalCoins: Int, ink: Color) {
+    val y = g.levelTop(layout, goalCoins)
     drawLine(
         ink, Offset(g.left + 8f * g.unitPx, y), Offset(g.right - 8f * g.unitPx, y),
         strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round,
         pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 7.dp.toPx())),
     )
+}
+
+private const val DROP_HEIGHT_IN_COINS = 8f
+
+/**
+ * Where coins sit in the jar, in the jar's own 340-unit drawing coordinates. Picks the largest coins (fewest
+ * columns) that fit, then spaces levels so the goal (or the balance, with no goal) fills about three
+ * quarters of the jar: big coins and a high goal line for small numbers, a full jar for big ones.
+ */
+data class JarLayout(val columns: Int, val coinWidth: Double, val coinHeight: Double, val step: Double) {
+    fun levelsFor(coins: Int): Int = (coins + columns - 1) / columns
+
+    companion object {
+        const val INNER_WIDTH: Double = 192.0
+        const val USABLE_HEIGHT: Double = 238.0
+        private const val TARGET_FILL = 0.75
+        private const val MAX_FILL = 0.85
+        private const val WIDTH_FILL = 0.86
+        private const val COIN_ASPECT = 0.3
+        private const val MIN_OVERLAP = 0.45
+        private const val MAX_COLUMNS = 5
+        private const val NO_GOAL_MINIMUM = 10
+
+        fun of(model: JarModel): JarLayout {
+            val needed = model.goalCoins?.let { maxOf(it, model.coins, 1) } ?: maxOf(model.coins, NO_GOAL_MINIMUM)
+            val columns = (1..MAX_COLUMNS).firstOrNull { c ->
+                ceilDiv(needed, c) * minStep(c) <= USABLE_HEIGHT * MAX_FILL
+            } ?: MAX_COLUMNS
+            val width = INNER_WIDTH / columns * WIDTH_FILL
+            val height = width * COIN_ASPECT
+            val levels = ceilDiv(needed, columns).coerceAtLeast(1)
+            val step = (USABLE_HEIGHT * TARGET_FILL / levels).coerceIn(minStep(columns), height)
+            return JarLayout(columns, width, height, minOf(step, USABLE_HEIGHT / maxOf(levels, ceilDiv(model.coins, columns))))
+        }
+
+        private fun minStep(columns: Int): Double = INNER_WIDTH / columns * WIDTH_FILL * COIN_ASPECT * MIN_OVERLAP
+
+        private fun ceilDiv(a: Int, b: Int): Int = (a + b - 1) / b
+    }
 }

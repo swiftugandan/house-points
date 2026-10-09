@@ -83,8 +83,6 @@ There are no cycles. `:ledger` and `:sync` are independent of each other, and on
 
 ## Deferred (recorded, not forgotten)
 
-- **Jar scale in picture view:** the jar is scaled for 200 coins, so a small goal (say 15 coins) sits near the bottom. It should scale to the larger of the goal and the balance.
-- **`:app` refactor pass** (red-first was skipped for the app; see CLAUDE.md).
 - **`:lan` live over Wi-Fi between two phones:** the test network had client isolation.
 
 - Home-screen widget (FR-44, SHOULD).

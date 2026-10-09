@@ -13,7 +13,7 @@ Phase 6, implementation. State as of 2026-10-09:
 - `:ledger`, `:sync` and `:data` are live-verified. `:ledger` was verified on the JVM against the spec examples; `:sync` and `:data` against the app on a TCL T1 Pro, through a desktop peer over `adb forward`.
 - `:lan` has been verified server-side over USB only. The test Wi-Fi had client isolation.
 - `:nearby` has been tested against mocks only. It needs two phones.
-- `:app` is at green: installed and exercised on the device, with JVM tests for its pure layer.
+- `:app` is refactored: installed and exercised on the device (light and dark mode, 200% text), with JVM tests for its pure layer. Polish since then (jar scaling, backdating) was done test-first.
 
 Open items are in the final section of `PLAN.md` and in "Notes for future sessions" below.
 

@@ -135,8 +135,8 @@ fun BackupScreen(onBack: () -> Unit, onExport: (CharArray) -> Unit, onImport: (C
                     "that you can keep wherever you like. It holds the history, not the pairing code: a restored phone pairs again.",
                 style = Hp.type.body, color = Hp.colors.inkMuted,
             )
-            dev.housepoints.app.ui.onboarding.Field("Passphrase", passphrase, { passphrase = it })
-            dev.housepoints.app.ui.onboarding.Field("Passphrase again", again, { again = it })
+            Field("Passphrase", passphrase, { passphrase = it })
+            Field("Passphrase again", again, { again = it })
             if (passphrase.isNotEmpty() && again.isNotEmpty() && passphrase != again) {
                 Text("The two passphrases don't match.", style = Hp.type.body, color = Hp.colors.deduct)
             }

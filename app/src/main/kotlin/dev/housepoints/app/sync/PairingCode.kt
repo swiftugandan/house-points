@@ -1,5 +1,6 @@
 package dev.housepoints.app.sync
 
+import android.graphics.Bitmap
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.google.zxing.BarcodeFormat
@@ -50,7 +51,7 @@ object PairingCode {
             mapOf(EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M, EncodeHintType.MARGIN to 2),
         )
         val pixels = IntArray(sizePx * sizePx) { i -> if (matrix.get(i % sizePx, i / sizePx)) DARK else LIGHT }
-        return android.graphics.Bitmap.createBitmap(pixels, sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888).asImageBitmap()
+        return Bitmap.createBitmap(pixels, sizePx, sizePx, Bitmap.Config.ARGB_8888).asImageBitmap()
     }
 
     private const val DARK = 0xFF18232B.toInt()
