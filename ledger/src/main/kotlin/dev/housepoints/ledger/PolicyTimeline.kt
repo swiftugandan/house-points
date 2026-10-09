@@ -7,6 +7,7 @@ import dev.housepoints.contracts.Lamport
 import dev.housepoints.contracts.PenaltyMode
 import dev.housepoints.contracts.Points
 import dev.housepoints.contracts.Policy
+import dev.housepoints.contracts.RateBp
 
 public data class PolicyChange<out P : Policy>(
     val policy: P,
@@ -26,7 +27,12 @@ public data class PolicyTimeline(
     val interest: List<PolicyChange<Policy.Interest>>,
     val penalty: List<PolicyChange<Policy.Penalty>>,
     val minCashOut: List<PolicyChange<Policy.MinCashOut>>,
+    /** SPEC FR-48: the bonus on top of the interest rate for new locks. */
+    val lockBonus: List<LockBonusChange>,
 ) {
+    public fun lockBonusAt(t: InstantMs): RateBp =
+        lockBonus.lastOrNull { it.effectiveFrom <= t }?.bonus ?: DEFAULT_LOCK_BONUS
+
     public fun exchangeAt(t: InstantMs): ExchangeRate? = inForce(exchange, t)?.rate
     public fun interestAt(t: InstantMs): Policy.Interest? = inForce(interest, t)
     public fun penaltyAt(t: InstantMs): PenaltyMode = inForce(penalty, t)?.mode ?: PenaltyMode.NONE
@@ -35,7 +41,10 @@ public data class PolicyTimeline(
     public fun interestHistory(): List<PolicyChange<Policy.Interest>> = interest
 
     public companion object {
-        public val EMPTY: PolicyTimeline = PolicyTimeline(emptyList(), emptyList(), emptyList(), emptyList())
+        public val EMPTY: PolicyTimeline = PolicyTimeline(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+
+        /** SPEC FR-48 default: locks earn one percentage point a week more than the account. */
+        public val DEFAULT_LOCK_BONUS: RateBp = RateBp(100)
 
         internal fun <P : Policy> resolve(changes: List<Pair<PolicyChange<P>, OpKey>>): List<PolicyChange<P>> {
             val ordered = changes.sortedWith(compareBy<Pair<PolicyChange<P>, OpKey>> { it.first.effectiveFrom }.thenBy { it.second })
@@ -49,3 +58,6 @@ public data class PolicyTimeline(
             changes.lastOrNull { it.effectiveFrom <= t }?.policy
     }
 }
+
+/** A lock-bonus setting (SPEC FR-48), resolved like the other policies. */
+public data class LockBonusChange(val bonus: RateBp, val effectiveFrom: InstantMs, val recordedBy: DeviceId, val lamport: Lamport)

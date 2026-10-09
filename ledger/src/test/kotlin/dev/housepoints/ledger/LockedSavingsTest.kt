@@ -48,7 +48,9 @@ class LockedSavingsTest {
         assertEquals(london("2026-10-19T00:00"), lock.earnsFrom)
         assertEquals(london("2026-11-16T00:00"), lock.maturity)
         assertEquals(Points(541), lock.payout)
-        assertEquals(micro("520.2"), lock.potAt(london("2026-10-30T12:00")))
+        assertEquals(micro("510"), lock.potAt(london("2026-10-30T12:00")))
+        assertEquals(micro("520.2"), lock.potAt(london("2026-11-02T12:00")))
+        assertEquals(micro("541.21608"), lock.potAt(london("2026-11-16T00:00")))
         assertEquals(LockStatus.LOCKED, lock.status)
     }
 

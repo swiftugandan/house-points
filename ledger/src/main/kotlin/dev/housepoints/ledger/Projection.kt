@@ -30,6 +30,9 @@ import dev.housepoints.contracts.UnknownPayload
 import dev.housepoints.contracts.Uuids
 import dev.housepoints.contracts.ValueId
 import dev.housepoints.contracts.ValueUpsert
+import dev.housepoints.contracts.LockPolicySet
+import dev.housepoints.contracts.RewardId
+import dev.housepoints.contracts.RewardUpsert
 
 /** An op with its payload decoded once; ops are immutable, so callers can keep these across projections. */
 public data class DecodedOp(val op: Op, val payload: Payload) {
@@ -57,7 +60,7 @@ public object Projection {
             folded.childIdsInCreationOrder(),
             asOf,
         )
-        val flags = accounts.flags + folded.malformed.sortedBy { it.op } +
+        val flags = accounts.flags + Locks.orphanedReturns(accounts.accounts) + folded.malformed.sortedBy { it.op } +
             listOfNotNull(folded.unknownCount.takeIf { it > 0 }?.let { Flag.NewerVersionSeen(it) })
         return FamilyState(
             asOf = asOf,
@@ -71,6 +74,7 @@ public object Projection {
             policies = folded.policies(),
             accounts = accounts.accounts,
             flags = flags,
+            rewards = folded.rewards(),
         )
     }
 
@@ -100,6 +104,8 @@ public object Projection {
         private val interest = mutableListOf<Pair<PolicyChange<Policy.Interest>, OpKey>>()
         private val penalty = mutableListOf<Pair<PolicyChange<Policy.Penalty>, OpKey>>()
         private val minCashOut = mutableListOf<Pair<PolicyChange<Policy.MinCashOut>, OpKey>>()
+        private val lockBonus = mutableListOf<Pair<LockBonusChange, OpKey>>()
+        private val rewardFields = HashMap<RewardId, RewardFields>()
 
         fun apply(decoded: DecodedOp) {
             val op = decoded.op
@@ -140,8 +146,11 @@ public object Projection {
                     entries[payload.entryId] = CanonicalEntry(payload, op, key)
                 }
                 is PolicySet -> addPolicy(payload, op, key)
-                is dev.housepoints.contracts.RewardUpsert -> TODO("green")
-                is dev.housepoints.contracts.LockPolicySet -> TODO("green")
+                is RewardUpsert -> {
+                    seen(payload.rewardId, key)
+                    rewardFields.getOrPut(payload.rewardId) { RewardFields() }.offer(payload, key)
+                }
+                is LockPolicySet -> lockBonus += LockBonusChange(payload.bonus, payload.effectiveFrom, op.originDevice, op.lamport) to key
                 is UnknownPayload -> unknownCount++
                 is MalformedPayload -> malformed += Flag.MalformedEntry(op.opId, "unreadable ${payload.type}: ${payload.reason}")
             }
@@ -171,7 +180,13 @@ public object Projection {
             PolicyTimeline.resolve(interest),
             PolicyTimeline.resolve(penalty),
             PolicyTimeline.resolve(minCashOut),
+            lockBonus.sortedWith(compareBy<Pair<LockBonusChange, OpKey>> { it.first.effectiveFrom }.thenBy { it.second }).map { it.first },
         )
+
+        fun rewards(): List<RewardRecord> = creationOrder(rewardFields.keys).map { id ->
+            val f = rewardFields.getValue(id)
+            RewardRecord(id, f.title.value ?: "", f.icon.value ?: DEFAULT_ICON, f.price.value ?: Points.ZERO, f.archived.value ?: false)
+        }
 
         fun childIdsInCreationOrder(): List<ChildId> =
             creationOrder((childFields.keys + entries.values.map { it.entry.childId }).toSet())
@@ -244,6 +259,20 @@ public object Projection {
             points.offer(p.points, key)
             assignees.offer(p.assignees, key)
             recurrence.offer(p.recurrence, key)
+            archived.offer(p.archived, key)
+        }
+    }
+
+    private class RewardFields {
+        val title = Lww<String>()
+        val icon = Lww<IconKey>()
+        val price = Lww<Points>()
+        val archived = Lww<Boolean>()
+
+        fun offer(p: RewardUpsert, key: OpKey) {
+            title.offer(p.title, key)
+            icon.offer(p.icon, key)
+            price.offer(p.price, key)
             archived.offer(p.archived, key)
         }
     }

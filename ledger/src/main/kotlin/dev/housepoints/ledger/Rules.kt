@@ -67,8 +67,21 @@ public object Rules {
         return CashOutVerdict.Allowed(money)
     }
 
-    public fun lock(state: FamilyState, child: ChildId, amount: Points): Verdict = TODO("green")
-    public fun redeem(state: FamilyState, child: ChildId, price: Points): Verdict = TODO("green")
+    /** SPEC FR-47: at least [Locks.MINIMUM], at most what is in the account. */
+    public fun lock(state: FamilyState, child: ChildId, amount: Points): Verdict {
+        if (state.family == null) return Verdict.Denied(DenialReason.NO_FAMILY)
+        if (amount < Locks.MINIMUM) return Verdict.Denied(DenialReason.BELOW_MINIMUM)
+        val available = state.account(child)?.displayed ?: Points.ZERO
+        return if (amount > available) Verdict.Denied(DenialReason.MORE_THAN_BALANCE) else Verdict.Allowed
+    }
+
+    /** SPEC FR-55: like a cash-out against the balance, with no minimum. */
+    public fun redeem(state: FamilyState, child: ChildId, price: Points): Verdict {
+        if (state.family == null) return Verdict.Denied(DenialReason.NO_FAMILY)
+        if (price <= Points.ZERO) return Verdict.Denied(DenialReason.NOT_POSITIVE)
+        val available = state.account(child)?.displayed ?: Points.ZERO
+        return if (price > available) Verdict.Denied(DenialReason.MORE_THAN_BALANCE) else Verdict.Allowed
+    }
 
     /** Chore credits plus awards in the current week, less deductions already recorded this week. */
     private fun thisWeeksAllowance(account: Account): Points {

@@ -41,8 +41,7 @@ public data class FamilyState(
     val policies: PolicyTimeline,
     val accounts: Map<ChildId, Account>,
     val flags: List<Flag>,
-    val rewards: List<RewardRecord> = emptyList(),
-    val lockBonus: List<PolicyChange<dev.housepoints.contracts.Policy.Interest>> = emptyList(),
+    val rewards: List<RewardRecord>,
 ) {
     public fun child(id: ChildId): ChildRecord? = children.firstOrNull { it.id == id }
     public fun chore(id: ChoreId): ChoreRecord? = chores.firstOrNull { it.id == id }
