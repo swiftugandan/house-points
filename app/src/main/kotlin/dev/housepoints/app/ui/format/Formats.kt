@@ -59,6 +59,7 @@ class Formats(private val locale: Locale, private val zone: ZoneId) {
     }
 
     fun shortDay(at: InstantMs): String = shortDay.format(Instant.ofEpochMilli(at.value).atZone(zone))
+    fun shortDay(day: LocalDate): String = shortDay.format(day)
     fun longDay(day: LocalDate): String = longDay.format(day)
     fun dayMonth(day: LocalDate): String = dayMonth.format(day)
     fun dayMonthYear(day: LocalDate): String = dayMonthYear.format(day)

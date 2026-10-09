@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
@@ -94,6 +95,9 @@ fun RecordSheet(
     var selected by remember { mutableStateOf(setOfNotNull(preselected ?: children.singleOrNull()?.id)) }
     var tab by rememberSaveable { mutableStateOf(startTab) }
     var refusal by remember { mutableStateOf<Refusal?>(null) }
+    var day by remember { mutableStateOf(today) }
+    val zone = requireNotNull(state.family).zone
+    val at: () -> InstantMs = { RecordDate.effectiveAt(day, today, now(), zone) }
     val singleChildTab = tab == RecordTab.CASH_OUT || tab == RecordTab.TAKE_AWAY
 
     fun submit(action: Action) {
@@ -159,9 +163,10 @@ fun RecordSheet(
                     if (it == RecordTab.CASH_OUT || it == RecordTab.TAKE_AWAY) selected = selected.take(1).toSet()
                 },
             )
+            if (!singleChildTab) WhenPicker(today, day, formats) { day = it; refusal = null }
             when (tab) {
-                RecordTab.CHORE -> ChoreDetail(state, today, selected, now, formats, refusal, ::submit)
-                RecordTab.AWARD -> AwardDetail(state, selected, now, formats, refusal, ::submit)
+                RecordTab.CHORE -> ChoreDetail(state, day, selected, at, formats, refusal, ::submit) { refusal = it }
+                RecordTab.AWARD -> AwardDetail(state, selected, at, formats, refusal, ::submit)
                 RecordTab.CASH_OUT -> CashOutDetail(state, selected.firstOrNull(), now, formats, lastSyncNotice, refusal, ::submit)
                 RecordTab.TAKE_AWAY -> TakeAwayDetail(state, selected.firstOrNull(), now, formats, refusal, ::submit)
             }
@@ -183,10 +188,52 @@ private fun RefusalText(refusal: Refusal?) {
     if (refusal != null) Text(Refusals.text(refusal), style = Hp.type.body, color = Hp.colors.deduct)
 }
 
+private enum class When { TODAY, YESTERDAY, EARLIER }
+
+/** SPEC FR-17: chores and awards can be recorded for an earlier day, up to a week back. */
+@Composable
+private fun WhenPicker(today: LocalDate, day: LocalDate, formats: Formats, onDay: (LocalDate) -> Unit) {
+    val choice = when (day) {
+        today -> When.TODAY
+        today.minusDays(1) -> When.YESTERDAY
+        else -> When.EARLIER
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
+        Text("When", style = Hp.type.label, color = Hp.colors.inkMuted)
+        Segmented(
+            listOf(When.TODAY to "Today", When.YESTERDAY to "Yesterday", When.EARLIER to "Earlier"),
+            choice,
+            onSelect = {
+                when (it) {
+                    When.TODAY -> onDay(today)
+                    When.YESTERDAY -> onDay(today.minusDays(1))
+                    When.EARLIER -> onDay(today.minusDays(2))
+                }
+            },
+        )
+        if (choice == When.EARLIER) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                RecordDate.choices(today).drop(2).forEach { option ->
+                    val on = option == day
+                    Box(
+                        Modifier.heightIn(min = Space.touch).clip(Radius.small)
+                            .background(if (on) Hp.colors.action else Hp.colors.sunk)
+                            .selectable(on, role = Role.RadioButton) { onDay(option) }
+                            .padding(horizontal = Space.m),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(formats.shortDay(option), style = Hp.type.label, color = if (on) Hp.colors.onAction else Hp.colors.ink)
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ChoreDetail(
-    state: FamilyState, today: LocalDate, selected: Set<ChildId>, now: () -> InstantMs, formats: Formats,
-    refusal: Refusal?, submit: (Action) -> Unit,
+    state: FamilyState, day: LocalDate, selected: Set<ChildId>, at: () -> InstantMs, formats: Formats,
+    refusal: Refusal?, submit: (Action) -> Unit, refuse: (Refusal) -> Unit,
 ) {
     val chores = state.chores.filter { !it.archived && it.kind != ChoreKind.EXPECTED }
     var choreId by remember { mutableStateOf<ChoreId?>(null) }
@@ -222,18 +269,19 @@ private fun ChoreDetail(
     }
     OutcomeButton(label, enabled = chore != null && selected.isNotEmpty(), onClick = {
         val picked = chore ?: return@OutcomeButton
-        val at = now()
+        val instant = at()
+        val alreadyThere = state.accounts.values.flatMap { it.lines }.filter { it.reversedBy == null }.map { it.entry.entryId }.toSet()
         val payloads = selected.flatMap { child ->
-            val due = Chores.dueFor(state, child, today).firstOrNull { it.chore.id == picked.id }
-            val action = if (due != null) FamilyActions.recordDueChore(child, due, at) else FamilyActions.recordBounty(state, setOf(child), picked.id, at)
+            val due = Chores.dueFor(state, child, day).firstOrNull { it.chore.id == picked.id }
+            val action = if (due != null) FamilyActions.recordDueChore(child, due, instant) else FamilyActions.recordBounty(state, setOf(child), picked.id, instant)
             (action as? Action.Record)?.payloads.orEmpty()
-        }
-        submit(Action.Record(payloads))
+        }.filter { (it as? dev.housepoints.contracts.EntryRecorded)?.entryId !in alreadyThere }
+        if (payloads.isEmpty()) refuse(Refusal.AlreadyRecorded) else submit(Action.Record(payloads))
     })
 }
 
 @Composable
-private fun AwardDetail(state: FamilyState, selected: Set<ChildId>, now: () -> InstantMs, formats: Formats, refusal: Refusal?, submit: (Action) -> Unit) {
+private fun AwardDetail(state: FamilyState, selected: Set<ChildId>, at: () -> InstantMs, formats: Formats, refusal: Refusal?, submit: (Action) -> Unit) {
     val values = state.values.filter { !it.archived }
     var valueId by remember { mutableStateOf<ValueId?>(values.firstOrNull()?.id) }
     var points by rememberSaveable { mutableStateOf(10L) }
@@ -256,7 +304,7 @@ private fun AwardDetail(state: FamilyState, selected: Set<ChildId>, now: () -> I
     OutcomeButton(
         if (selected.isEmpty()) "Choose who" else "Add ${formats.points(Points(points))}$each to ${names(state, selected)}",
         enabled = selected.isNotEmpty(),
-        onClick = { submit(FamilyActions.award(selected, valueId, Points(points), note, now())) },
+        onClick = { submit(FamilyActions.award(selected, valueId, Points(points), note, at())) },
     )
 }
 
