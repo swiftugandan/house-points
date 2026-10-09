@@ -2,6 +2,8 @@
 
 The visual system for House Points, following [impeccable.style](https://impeccable.style) conventions. Product context is in `PRODUCT.md`. Every color, font, size and radius used in the app must come from this file.
 
+**Concept board:** [House Points: Passbook screens](https://claude.ai/artifact/RjVucRpKsGPpabJ4ds4PPx) shows seven screens in this direction (private until shared).
+
 ## Direction: "Passbook"
 
 The app is the family's savings passbook: ruled lines, dated rows, figures in a column, and a stamp at every payday. That gives a parent something that feels trustworthy and gives a child something that feels like a real bank. The motif is carried by **typography and rules (thin dividing lines), not imitation paper**. There is no paper texture, no stitching and no fake leather.
