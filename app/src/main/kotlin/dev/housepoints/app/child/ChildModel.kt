@@ -12,6 +12,8 @@ import dev.housepoints.contracts.IconKey
 import dev.housepoints.contracts.Points
 import dev.housepoints.ledger.Chores
 import dev.housepoints.ledger.FamilyState
+import dev.housepoints.ledger.LockStatus
+import dev.housepoints.ledger.Locks
 import dev.housepoints.ledger.Pace
 import dev.housepoints.ledger.ProjectionResult
 import dev.housepoints.ledger.Projections
@@ -36,6 +38,8 @@ data class ChildViewModel(
     val today: List<TodayJob>,
     val recent: List<LedgerRowModel>,
     val interestExplanation: String,
+    /** SPEC FR-53: what is locked away and when it comes back; null with nothing locked. */
+    val lockedLine: String?,
 )
 
 data class TodayJob(val title: String, val icon: IconKey, val done: Boolean)
@@ -60,7 +64,7 @@ object ChildViews {
             balanceText = formats.points(balance),
             worth = formats.worth(balance, rate, family.currency),
             jar = jar,
-            sentence = sentence(jar, balance),
+            sentence = sentence(jar, balance, hasLocks = activeLocks(state, child).isNotEmpty()),
             goalTitle = goal?.title,
             goalIcon = goal?.icon,
             goalProgress = goal?.let { "${formats.points(balance)} of ${formats.points(it.target)}" },
@@ -69,6 +73,7 @@ object ChildViews {
             interestOnly = goal?.let { describe(Projections.toTarget(state, child, it.target, Pace.INTEREST_ONLY), formats) },
             today = todayJobs(state, child, today),
             recent = account?.lines.orEmpty().take(RECENT_ROWS).map { AccountModels.lineModel(state, it, formats) },
+            lockedLine = lockedLine(state, child, formats),
             interestExplanation = interest?.let {
                 "Interest is ${formats.percent(it.rate.value)} a week on the smallest amount you had all week."
             } ?: "Interest is paid each week on the smallest amount you had all week.",
@@ -77,7 +82,25 @@ object ChildViews {
 
     fun afterWeeks(state: FamilyState, child: ChildId, weeks: Int): Points = Projections.afterWeeks(state, child, weeks)
 
-    private fun sentence(jar: JarModel, balance: Points): String = when {
+    private fun activeLocks(state: FamilyState, child: ChildId) =
+        Locks.forChild(state, child).filter { it.status == LockStatus.LOCKED || it.status == LockStatus.DUE }
+
+    private fun lockedLine(state: FamilyState, child: ChildId, formats: Formats): String? {
+        val locks = activeLocks(state, child)
+        val first = locks.minByOrNull { it.maturity.value } ?: return null
+        if (locks.size == 1) {
+            return "${formats.points(first.principal)} locked away until ${formats.dayShortMonth(first.maturity)}, growing to about ${formats.points(first.payout)}"
+        }
+        val total = locks.fold(Points.ZERO) { sum, lock -> sum + lock.principal }
+        return "${formats.points(total)} locked away; the first comes back ${formats.dayShortMonth(first.maturity)}"
+    }
+
+    private fun sentence(jar: JarModel, balance: Points, hasLocks: Boolean): String {
+        val base = coinsSentence(jar, balance)
+        return if (hasLocks) base.removeSuffix(".") + ", and more locked away." else base
+    }
+
+    private fun coinsSentence(jar: JarModel, balance: Points): String = when {
         balance.value <= 0 -> "Your jar is empty. Jobs fill it up."
         jar.coinValue > 10 && jar.coins > 0 -> "You have ${jar.coins} big coins. Each big coin is ${jar.coinValue} points."
         jar.coins == 0 -> "You have a bit of a coin. Ten points make a coin."

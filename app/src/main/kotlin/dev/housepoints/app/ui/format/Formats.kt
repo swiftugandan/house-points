@@ -25,6 +25,7 @@ class Formats(private val locale: Locale, private val zone: ZoneId) {
     private val shortDayMonthYear = DateTimeFormatter.ofPattern("d MMM yyyy", locale)
     private val monthYear = DateTimeFormatter.ofPattern("MMM yyyy", locale)
     private val time = DateTimeFormatter.ofPattern("HH:mm", locale)
+    private val dayShortMonth = DateTimeFormatter.ofPattern("EEE d MMM", locale)
 
     fun points(value: Points): String = integer.format(value.value)
 
@@ -60,6 +61,9 @@ class Formats(private val locale: Locale, private val zone: ZoneId) {
 
     fun shortDay(at: InstantMs): String = shortDay.format(Instant.ofEpochMilli(at.value).atZone(zone))
     fun shortDay(day: LocalDate): String = shortDay.format(day)
+
+    /** `Mon 16 Nov`. */
+    fun dayShortMonth(at: InstantMs): String = dayShortMonth.format(Instant.ofEpochMilli(at.value).atZone(zone))
     fun longDay(day: LocalDate): String = longDay.format(day)
     fun dayMonth(day: LocalDate): String = dayMonth.format(day)
     fun dayMonthYear(day: LocalDate): String = dayMonthYear.format(day)
