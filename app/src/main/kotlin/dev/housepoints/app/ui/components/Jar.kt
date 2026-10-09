@@ -182,3 +182,13 @@ private fun DrawScope.drawGoalLine(g: JarGeometry, goalCoins: Int, ink: androidx
         pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 7.dp.toPx())),
     )
 }
+
+/** Where coins sit in the jar, in the jar's own 340-unit coordinate system. */
+data class JarLayout(val columns: Int, val coinWidth: Double, val coinHeight: Double, val step: Double) {
+    fun levelsFor(coins: Int): Int = TODO("green")
+
+    companion object {
+        const val USABLE_HEIGHT: Double = 238.0
+        fun of(model: JarModel): JarLayout = TODO("green")
+    }
+}
