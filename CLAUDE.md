@@ -8,7 +8,14 @@ An Android app that runs only on parents' phones and keeps a family "bank" for c
 
 ## Current phase
 
-Phase 2: specification drafted. The confidence gate has not cleared yet; `SPEC.md` lists the open questions. `spec/v0.1.0` has not been tagged.
+Phase 6, implementation. State as of 2026-10-09:
+- `:contracts` is frozen at 0.1.0.
+- `:ledger`, `:sync` and `:data` are live-verified. `:ledger` was verified on the JVM against the spec examples; `:sync` and `:data` against the app on a TCL T1 Pro, through a desktop peer over `adb forward`.
+- `:lan` has been verified server-side over USB only. The test Wi-Fi had client isolation.
+- `:nearby` has been tested against mocks only. It needs two phones.
+- `:app` is at green: installed and exercised on the device, with JVM tests for its pure layer.
+
+Open items are in the final section of `PLAN.md` and in "Notes for future sessions" below.
 
 ## Quick status
 
@@ -45,4 +52,9 @@ git tag --list 'module/*/live-verified'
   - Also forbidden: `GlobalScope`, `runBlocking` on the main thread, `lateinit` used to dodge initialisation order, and catching `Throwable`/`Exception` without rethrowing or modelling the failure.
 - **Determinism is the core invariant.** The balance and interest functions are pure: `(operation set, as-of instant) → balances`. Never introduce floating point, wall-clock reads, locale-dependent formatting, or iteration over unordered collections into that path.
 - **The interest adjustment after a sync is a display-only difference** between a locally stored snapshot of the last shown balance and the new one. It is never a ledger entry.
+- **Running on the phone:** set `JAVA_HOME=/Users/p.munaawa/Library/Java/JavaVirtualMachines/jdk-17.0.20.1+1/Contents/Home`, then run `./gradlew :app:installDebug`. The SDK is at `~/Library/Android/sdk` (`local.properties`).
+- **Live LAN test:**
+  1. Run `adb forward tcp:<port> tcp:<port>`. Find the port in `/proc/net/tcp6` for the app's uid, or in the NsdService logcat.
+  2. Run `./gradlew :lan:testDebugUnitTest --tests '*LiveDesktopPeerTest*' -Php.peer=127.0.0.1:<port> -Php.pairing=<code> --no-configuration-cache`.
+- **Process deviation, recorded honestly:** `:app` code was written before its tests, which breaks the red-first rule. Its JVM tests came after, and new app work should go back to red-first.
 - **The `.env*` rule in the global instructions applies here too.**

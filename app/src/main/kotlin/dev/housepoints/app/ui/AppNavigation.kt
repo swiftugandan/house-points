@@ -493,7 +493,7 @@ private fun DiagnosticsRoute(graph: AppGraph, state: FamilyState, formats: Forma
         counts = listOf(
             "This phone" to graph.deviceId.toString(),
             "Family" to (state.family?.id?.toString() ?: "none"),
-            "Entries in the log" to graph.opLog.all().size.toString(),
+            "Operations in the log" to graph.opLog.all().size.toString(),
             "Known per phone" to vector.entries.entries.joinToString("\n") { (device, seq) ->
                 (state.devices.firstOrNull { it.id == device }?.name?.ifBlank { null } ?: device.toString().take(8)) + ": " + seq.value
             },

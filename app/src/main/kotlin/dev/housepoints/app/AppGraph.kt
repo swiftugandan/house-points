@@ -78,8 +78,9 @@ class AppGraph(context: Context) {
             refreshHistory()
         }
         scope.launch {
-            combine(foreground, key) { visible, held -> if (visible) held as? KeyState.Held else null }
-                .distinctUntilChanged()
+            // Restart when this phone's name arrives, so other phones see it by name rather than "A phone".
+            val ownName = repository.snapshot.map { phoneName() }.distinctUntilChanged()
+            combine(foreground, key, ownName) { visible, held, _ -> if (visible) held as? KeyState.Held else null }
                 .collect { held -> if (held != null) startAutomatic(held) else sync.stop() }
         }
         scope.launch {
