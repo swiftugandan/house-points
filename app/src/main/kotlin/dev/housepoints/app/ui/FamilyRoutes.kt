@@ -212,6 +212,10 @@ private fun EntrySheet(f: FamilyScope, selected: LedgerLine, onDismiss: () -> Un
         title = row.title,
         detail = listOfNotNull(row.note, "${row.amount} on $day", row.amountSub).joinToString("\n"),
         recordedBy = "Recorded on $who",
+        reversal = { reason ->
+            if (selected.entry.lock != null) FamilyActions.reverseLock(f.state, selected, reason)
+            else FamilyActions.reverse(f.state, selected, reason)
+        },
         perform = f.family::execute,
         onDismiss = onDismiss,
     )

@@ -48,10 +48,15 @@ public object Locks {
         val lines = state.account(child)?.lines.orEmpty()
         val periods = Periods(family.zone, family.weekStart)
         val returns = lines.filter { it.reversedBy == null && it.entry.lockPayout != null }.groupBy { it.entry.lockPayout }
+        val payoutIds = lines.map { it.entry.entryId }.toSet()
         return lines
             .filter { it.reversedBy == null && it.entry.lock != null && it.entry.kind == EntryKind.ADJUSTMENT && it.effect < Points.ZERO }
             .sortedBy { it.entry.effectiveAt }
-            .map { line -> lockOf(line, periods, returns[line.entry.entryId].orEmpty(), state.asOf) }
+            .map { line ->
+                // A payout already in the log, even reversed, is never offered again: its id is taken (SPEC FR-50).
+                val payoutRecorded = EntryIds.lockPayout(line.entry.entryId) in payoutIds
+                lockOf(line, periods, returns[line.entry.entryId].orEmpty(), payoutRecorded, state.asOf)
+            }
     }
 
     /** Payouts that have matured and are not yet recorded (SPEC FR-50); the app records these. */
@@ -86,7 +91,7 @@ public object Locks {
                 .map { Flag.OrphanedLockReturn(child, it.entry.entryId) }
         }.sortedBy { it.entry }
 
-    private fun lockOf(line: LedgerLine, periods: Periods, returns: List<LedgerLine>, asOf: InstantMs): Lock {
+    private fun lockOf(line: LedgerLine, periods: Periods, returns: List<LedgerLine>, payoutRecorded: Boolean, asOf: InstantMs): Lock {
         val terms = requireNotNull(line.entry.lock)
         val principal = -line.effect
         var period = periods.next(periods.containing(line.entry.effectiveAt))
@@ -101,7 +106,7 @@ public object Locks {
         }
         val maturity = paydays.lastOrNull() ?: earnsFrom
         val status = when {
-            returns.any { it.entry.entryId == EntryIds.lockPayout(line.entry.entryId) } -> LockStatus.PAID
+            payoutRecorded -> LockStatus.PAID
             returns.isNotEmpty() -> LockStatus.BROKEN
             maturity <= asOf -> LockStatus.DUE
             else -> LockStatus.LOCKED

@@ -37,6 +37,12 @@ import dev.housepoints.ledger.DenialReason
 import dev.housepoints.ledger.DueChore
 import dev.housepoints.ledger.FamilyState
 import dev.housepoints.ledger.LedgerLine
+import dev.housepoints.ledger.Lock
+import dev.housepoints.ledger.Locks
+import dev.housepoints.ledger.RewardRecord
+import dev.housepoints.contracts.LockPolicySet
+import dev.housepoints.contracts.RewardId
+import dev.housepoints.contracts.RewardUpsert
 import dev.housepoints.ledger.Rules
 import dev.housepoints.ledger.Verdict
 import java.time.DayOfWeek
@@ -59,6 +65,9 @@ sealed interface Refusal {
     data object UnknownChore : Refusal
     data object AlreadyReversed : Refusal
     data object AlreadyRecorded : Refusal
+
+    /** SPEC FR-52: a lock and its payout or break are only reversed together. */
+    data object LockHasReturns : Refusal
     data object InvalidPolicy : Refusal
 }
 
@@ -205,20 +214,84 @@ object FamilyActions {
         return Action.Record(listOf(EntryRecorded(EntryIds.random(now.value), child, EntryKind.ADJUSTMENT, points, now, note.trim())))
     }
 
-    /** SPEC FR-16: takes effect at the reversed entry's instant; the id is deterministic. */
-    fun reverse(line: LedgerLine, reason: String): Action {
+    /**
+     * SPEC FR-16: takes effect at the reversed entry's instant; the id is deterministic. A lock with a payout or
+     * break, and a payout or break itself, can only be reversed together through [reverseLock] (SPEC FR-52).
+     */
+    fun reverse(state: FamilyState, line: LedgerLine, reason: String): Action {
         if (line.reversedBy != null) return Action.Refused(Refusal.AlreadyReversed)
         if (reason.isBlank()) return Action.Refused(Refusal.NoteRequired)
+        if (line.entry.lockPayout != null || (line.entry.lock != null && returnsOf(state, line).isNotEmpty())) {
+            return Action.Refused(Refusal.LockHasReturns)
+        }
+        return Action.Record(listOf(reversalOf(line, reason)))
+    }
+
+    /** SPEC FR-52: reverse a lock and every payout or break of it, as one recorded action. */
+    fun reverseLock(state: FamilyState, lockLine: LedgerLine, reason: String): Action {
+        if (lockLine.entry.lock == null) return reverse(state, lockLine, reason)
+        if (lockLine.reversedBy != null) return Action.Refused(Refusal.AlreadyReversed)
+        if (reason.isBlank()) return Action.Refused(Refusal.NoteRequired)
+        return Action.Record((listOf(lockLine) + returnsOf(state, lockLine)).map { reversalOf(it, reason) })
+    }
+
+    private fun returnsOf(state: FamilyState, lockLine: LedgerLine): List<LedgerLine> =
+        state.account(lockLine.entry.childId)?.lines.orEmpty()
+            .filter { it.reversedBy == null && it.entry.lockPayout == lockLine.entry.entryId }
+
+    private fun reversalOf(line: LedgerLine, reason: String): EntryRecorded {
         val target = line.entry
-        return Action.Record(
-            listOf(
-                EntryRecorded(
-                    EntryIds.reversal(target.entryId), target.childId, EntryKind.REVERSAL, -line.effect,
-                    target.effectiveAt, reason.trim(), reverses = target.entryId,
-                ),
-            ),
+        return EntryRecorded(
+            EntryIds.reversal(target.entryId), target.childId, EntryKind.REVERSAL, -line.effect,
+            target.effectiveAt, reason.trim(), reverses = target.entryId,
         )
     }
+
+    /** SPEC FR-47: lock part of the balance with today's terms, frozen into the entry. */
+    fun lock(state: FamilyState, child: ChildId, points: Points, weeks: Int, now: InstantMs): Action =
+        when (val verdict = Rules.lock(state, child, points)) {
+            is Verdict.Denied -> Action.Refused(Refusal.Rule(verdict.reason))
+            Verdict.Allowed -> Action.Record(
+                listOf(
+                    EntryRecorded(
+                        EntryIds.random(now.value), child, EntryKind.ADJUSTMENT, -points, now,
+                        "Locked away for $weeks weeks", lock = Locks.termsNow(state, weeks),
+                    ),
+                ),
+            )
+        }
+
+    /** SPEC FR-51: the principal comes back now, with no interest; no payout will follow. */
+    fun breakLock(lock: Lock, now: InstantMs): Action.Record = Action.Record(
+        listOf(
+            EntryRecorded(
+                EntryIds.random(now.value), lock.child, EntryKind.ADJUSTMENT, lock.principal, now,
+                "Lock broken early: ${lock.principal.value} back, no interest", lockPayout = lock.lockId,
+            ),
+        ),
+    )
+
+    fun saveReward(id: RewardId?, title: String, icon: IconKey, price: Points): Action.Record =
+        Action.Record(listOf(RewardUpsert(id ?: RewardId(Uuids.random()), title.trim(), icon, price, archived = false)))
+
+    fun archiveReward(id: RewardId): Action.Record = Action.Record(listOf(RewardUpsert(id, archived = true)))
+
+    /** SPEC FR-55: spends the reward's price, checked like a cash-out; readable as an adjustment on v0.1.0. */
+    fun redeem(state: FamilyState, child: ChildId, reward: RewardRecord, now: InstantMs): Action =
+        when (val verdict = Rules.redeem(state, child, reward.price)) {
+            is Verdict.Denied -> Action.Refused(Refusal.Rule(verdict.reason))
+            Verdict.Allowed -> Action.Record(
+                listOf(
+                    EntryRecorded(
+                        EntryIds.random(now.value), child, EntryKind.ADJUSTMENT, -reward.price, now,
+                        "Reward: ${reward.title}", rewardId = reward.id,
+                    ),
+                ),
+            )
+        }
+
+    fun setLockBonus(bonus: RateBp, from: InstantMs): Action =
+        if (!bonus.isValid) Action.Refused(Refusal.InvalidPolicy) else Action.Record(listOf(LockPolicySet(bonus, from)))
 
     fun tick(chore: ChoreId, child: ChildId, day: LocalDate, done: Boolean): Action.Record =
         Action.Record(listOf(TickSet(chore, child, day, done)))

@@ -13,6 +13,7 @@ object Refusals {
         Refusal.UnknownChore -> "That job no longer exists."
         Refusal.AlreadyReversed -> "This entry has already been reversed."
         Refusal.AlreadyRecorded -> "That job is already recorded for that day."
+        Refusal.LockHasReturns -> "This lock's points have already come back. Reverse the lock itself to undo both together."
         Refusal.InvalidPolicy -> "Those numbers don't make a valid rule."
         is Refusal.Rule -> when (refusal.reason) {
             DenialReason.NO_FAMILY -> "Set up the family first."

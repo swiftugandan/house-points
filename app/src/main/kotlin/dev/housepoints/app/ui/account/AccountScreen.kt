@@ -158,6 +158,7 @@ fun LineSheet(
     title: String,
     detail: String,
     recordedBy: String,
+    reversal: (reason: String) -> Action,
     perform: suspend (Action) -> Outcome,
     onDismiss: () -> Unit,
 ) {
@@ -182,7 +183,7 @@ fun LineSheet(
                 refusal?.let { Text(Refusals.text(it), style = Hp.type.body, color = Hp.colors.deduct) }
                 OutcomeButton("Reverse this entry", onClick = {
                     scope.launch {
-                        when (val outcome = perform(FamilyActions.reverse(line, reason))) {
+                        when (val outcome = perform(reversal(reason))) {
                             is Outcome.Recorded -> { sheet.hide(); onDismiss() }
                             is Outcome.Refused -> refusal = outcome.reason
                             Outcome.NoFamily -> onDismiss()
