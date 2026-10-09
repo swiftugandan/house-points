@@ -13,6 +13,14 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Library test APKs otherwise target minSdk, which Play Protect blocks as "built for an older Android".
+    testOptions {
+        targetSdk = libs.versions.targetSdk.get().toInt()
+    }
+    lint {
+        targetSdk = libs.versions.targetSdk.get().toInt()
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
