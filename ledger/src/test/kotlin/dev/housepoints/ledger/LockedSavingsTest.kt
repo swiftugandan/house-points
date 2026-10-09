@@ -132,6 +132,20 @@ class LockedSavingsTest {
     }
 
     @Test
+    fun `a preview gives the same maturity and payout the real lock will`() {
+        val ex = L1()
+        val before = LogBuilder().apply {
+            createFamily(); interestRate(0, from = "2026-08-01T00:00"); interestRate(100, from = "2026-10-12T00:00"); lockBonus(100)
+        }
+        val ada = before.child("Ada")
+        before.award(ada, 1000, "2026-10-01T09:00")
+        val preview = Locks.preview(Projection.project(before.ops(), london("2026-10-14T12:00")), ada, Points(500), weeks = 4)!!
+        val real = Locks.forChild(ex.state("2026-10-14T12:01"), ex.ada).single()
+        assertEquals(real.maturity, preview.maturity)
+        assertEquals(real.payout, preview.payout)
+    }
+
+    @Test
     fun `new lock terms use the rate and cap in force plus the bonus`() {
         val ex = L1()
         val terms = Locks.termsNow(ex.state("2026-10-20T09:00"), weeks = 8)

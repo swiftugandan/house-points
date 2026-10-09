@@ -82,7 +82,18 @@ public object Locks {
         return LockTerms(weeks, RateBp((interest?.rate?.value ?: 0) + bonus.value), interest?.cap)
     }
 
-    /** SPEC FR-52: returns (payout or early break) still in force whose lock has been reversed. */
+    /** What locking [principal] now for [weeks] would give: the same calculation the real lock will use. */
+    public fun preview(state: FamilyState, child: ChildId, principal: Points, weeks: Int): Lock? {
+        val family = state.family ?: return null
+        val terms = termsNow(state, weeks)
+        val line = LedgerLine(
+            EntryRecorded(EntryId(java.util.UUID(0, 0)), child, EntryKind.ADJUSTMENT, -principal, state.asOf, "", lock = terms),
+            -principal, dev.housepoints.contracts.DeviceId(java.util.UUID(0, 0)), dev.housepoints.contracts.Lamport.ZERO, null,
+        )
+        return lockOf(line, Periods(family.zone, family.weekStart), emptyList(), payoutRecorded = false, asOf = state.asOf)
+    }
+
+        /** SPEC FR-52: returns (payout or early break) still in force whose lock has been reversed. */
     internal fun orphanedReturns(accounts: Map<ChildId, Account>): List<Flag.OrphanedLockReturn> =
         accounts.flatMap { (child, account) ->
             val reversedLocks = account.lines.filter { it.entry.lock != null && it.reversedBy != null }.map { it.entry.entryId }.toSet()
@@ -92,7 +103,7 @@ public object Locks {
         }.sortedBy { it.entry }
 
     private fun lockOf(line: LedgerLine, periods: Periods, returns: List<LedgerLine>, payoutRecorded: Boolean, asOf: InstantMs): Lock {
-        val terms = requireNotNull(line.entry.lock)
+        val terms = line.entry.lock ?: LockTerms(0, RateBp(0), null)
         val principal = -line.effect
         var period = periods.next(periods.containing(line.entry.effectiveAt))
         val earnsFrom = period.start
