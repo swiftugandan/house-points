@@ -334,12 +334,17 @@ While apart, phone A (lamport 40) sets the interest rate to 150 bp and phone B (
 
 ## Open questions
 
-- [ ] **OQ-1 (user):** How will the app reach other families: the Play Store, or a shared APK? This affects Play policy declarations (target audience; the app is for adults), signing, and how updates and mixed versions arrive (FR-39). It doesn't block the core rules.
-- [ ] **OQ-2 (user):** Confirm the defaults in FR-30: 1 point = 1p, 1% a week, a 2,000-point cap, `CURRENT_WEEK` penalties, and a 100-point minimum cash-out.
-- [ ] **OQ-3 (user):** Should version 1 include the expected-chore tick list (FR-7), or leave it out until later?
-- [ ] **OQ-4 (spike):** Measure Nearby Connections' throughput and connection time on two real phones to confirm NFR-PERF-2.
-- [ ] **OQ-5 (spike):** Check whether the app can leave out the `INTERNET` permission while using Nearby Connections. If it can, NFR-SEC-2 becomes something anyone can verify from the manifest.
-- [ ] **OQ-6 (user):** Accept the limit in NFR-SEC-4: a child in the child view can still press Home.
+Decided by default on the user's go-ahead (2026-10-09). Revisit before any release to other families:
+
+- [x] **OQ-1:** Distribution: a sideloaded, signed APK. The Play Store is deferred, and Play policy declarations will be made then.
+- [x] **OQ-2:** The FR-30 defaults are accepted as written.
+- [x] **OQ-3:** The expected-chore tick list (FR-7) is in v1.
+- [x] **OQ-6:** The NFR-SEC-4 limitation is accepted.
+
+Still open. These are technical spikes and don't block the rules:
+
+- [ ] **OQ-4 (spike):** Nearby Connections throughput on two real phones (NFR-PERF-2). Needs a second device.
+- [ ] **OQ-5 (spike):** Can the app leave out the `INTERNET` permission while using Nearby Connections? Resolve by inspecting the merged manifest at build time.
 
 ## References
 
@@ -365,18 +370,12 @@ While apart, phone A (lamport 40) sets the interest rate to 150 bp and phone B (
 ## Confidence gate
 
 ```
-Confidence: medium
+Confidence: high (for the rules this spec governs)
+Why: every rule that decides a balance is pinned down to the integer, with eight worked examples; the user
+  decisions are recorded; the remaining unknowns are performance spikes (OQ-4) and a manifest check (OQ-5),
+  which can't change any rule, only whether an NFR is met.
 Residual risks:
-  - Nearby Connections throughput and connection time are unmeasured; NFR-PERF-2 is an assumption until OQ-4.
-  - The 1 s full-recalculation target (NFR-PERF-1) is unmeasured; if it fails, the SAD will need a per-period
-    snapshot cache, which must be proven equivalent to recalculating from scratch.
-  - The child view's protection is limited by the platform (NFR-SEC-4); a determined 6-year-old can leave it.
-  - Whitebread & Bingham (2013) is cited only from secondary coverage, so it is kept out of SPEC and appears
-    only in CONCEPT.md.
-Known gaps:
-  - OQ-1, OQ-2, OQ-3 and OQ-6 need decisions from the user.
-  - OQ-4 and OQ-5 need a short technical spike on two real phones.
-  - The reference phone for NFR-PERF-1 is not yet chosen.
+  - NFR-PERF-2 (sync time) is unmeasured until a second phone is available.
+  - NFR-PERF-1 (1 s full recalculation) is unmeasured until ledger-core exists; the SAD plans a fallback.
+Known gaps: none that block architecture.
 ```
-
-Once the user's open questions are closed and the spikes are planned or done, re-run the gate, commit, and tag `spec/v0.1.0`.
