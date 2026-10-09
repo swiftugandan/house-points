@@ -10,9 +10,10 @@ public class VersionVector(entries: Map<DeviceId, Seq>) {
 
     public operator fun get(device: DeviceId): Seq = entries[device] ?: Seq.NONE
 
-    public fun covers(op: Op): Boolean = TODO("red")
+    public fun covers(op: Op): Boolean = op.originSeq <= this[op.originDevice]
 
-    public fun withOp(op: Op): VersionVector = TODO("red")
+    public fun withOp(op: Op): VersionVector =
+        if (covers(op)) this else VersionVector(entries + (op.originDevice to op.originSeq))
 
     override fun equals(other: Any?): Boolean = other is VersionVector && other.entries == entries
     override fun hashCode(): Int = entries.hashCode()
