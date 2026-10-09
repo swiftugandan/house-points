@@ -224,14 +224,15 @@ The UI never calculates a balance itself.
 
 ### 4.2 Payload types (schemaVersion 1)
 
-| `type` | Payload | Semantics |
-|---|---|---|
-| `family.created` | name, currency, zoneId, weekStart | Exactly one per family. Later duplicates are ignored, and the lowest `(lamport, deviceId)` wins. |
-| `record.set` | kind (child, chore, value, goal, device), id, field → JSON value | Last-writer-wins per field (FR-35) |
-| `ledger.entry` | entryId, childId, kind, points, effectiveAt, refs, note, cash-out details | FR-11 to FR-17. The ID rules are in FR-18. |
-| `policy.set` | kind (exchange, interest, penalty, min-cash-out), effectiveFrom, parameters | FR-31 |
-| `tick.set` | choreId, childId, day, done | Last-writer-wins (FR-7) |
-| `device.removed` | deviceId | FR-4. The ops already in the log stay. |
+`CONTRACTS.md` has the full catalogue. In summary:
+- one `family.created`
+- typed per-record upserts (`device.upsert`, `child.upsert`, `chore.upsert`, `value.upsert`, `goal.upsert`), which are per-field last-writer-wins: an absent field means "not written"
+- `ledger.entry`
+- `policy.set`
+- `tick.set`
+- `device.removed`
+
+Unknown and unreadable payloads are kept and forwarded.
 
 ### 4.3 Sync protocol v1 (inside `SyncSession`)
 
