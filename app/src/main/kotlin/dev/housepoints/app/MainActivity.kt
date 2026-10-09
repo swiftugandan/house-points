@@ -46,9 +46,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        (application as HousePointsApp).graph.setForeground(true)
+    }
+
     override fun onResume() {
         super.onResume()
         (application as HousePointsApp).graph.repository.invalidate()
+    }
+
+    override fun onStop() {
+        (application as HousePointsApp).graph.setForeground(false)
+        super.onStop()
     }
 }
 

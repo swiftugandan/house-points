@@ -7,7 +7,11 @@ import dev.housepoints.app.family.FamilyRepository
 import dev.housepoints.app.family.FamilySnapshot
 import dev.housepoints.app.family.FamilyViewModel
 import dev.housepoints.app.platform.PaydayReminder
+import dev.housepoints.app.sync.LinkFactory
+import dev.housepoints.app.sync.NearbyPeerLink
 import dev.housepoints.app.sync.SyncController
+import dev.housepoints.lan.LanLink
+import dev.housepoints.nearby.NearbyLink
 import dev.housepoints.contracts.FamilyId
 import dev.housepoints.data.DeviceIdentityStore
 import dev.housepoints.data.FamilyKeyVault
@@ -21,6 +25,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -53,7 +58,15 @@ class AppGraph(context: Context) {
     private val _key = MutableStateFlow<KeyState>(KeyState.Loading)
     val key: StateFlow<KeyState> = _key.asStateFlow()
 
-    val sync = SyncController(appContext, scope, opLog, repository, historyStore, deviceId, clock) { refreshHistory() }
+    val sync = SyncController(scope, opLog, repository, historyStore, deviceId, clock) { refreshHistory() }
+
+    /** Same Wi-Fi: the default, used automatically while the app is open (SAD ADR-9). */
+    val localNetwork = LinkFactory { family, name -> LanLink(appContext, family, deviceId, name) }
+
+    /** Bluetooth and Wi-Fi Direct through Nearby Connections, for when the phones don't share a network. */
+    val bluetooth = LinkFactory { family, name -> NearbyPeerLink(NearbyLink(appContext, family, deviceId, name)) }
+
+    private val foreground = MutableStateFlow(false)
 
     val familyKeys = object : FamilyKeys {
         override suspend fun create(family: FamilyId) = store(family, FamilyKey.generate())
@@ -65,12 +78,34 @@ class AppGraph(context: Context) {
             refreshHistory()
         }
         scope.launch {
+            combine(foreground, key) { visible, held -> if (visible) held as? KeyState.Held else null }
+                .distinctUntilChanged()
+                .collect { held -> if (held != null) startAutomatic(held) else sync.stop() }
+        }
+        scope.launch {
             repository.snapshot
                 .map { (it as? FamilySnapshot.Ready)?.state?.accounts?.values?.firstOrNull()?.current?.end }
                 .distinctUntilChanged()
                 .collect { payday -> if (payday != null) PaydayReminder.schedule(appContext, payday) }
         }
     }
+
+    /** Called by the activity: automatic sync runs only while House Points is on screen. */
+    fun setForeground(visible: Boolean) {
+        foreground.value = visible
+    }
+
+    /** Back to automatic sync after a manual sync on the Sync screen. */
+    fun resumeAutomatic() {
+        (key.value as? KeyState.Held)?.takeIf { foreground.value }?.let(::startAutomatic)
+    }
+
+    fun phoneName(): String {
+        val state = (repository.snapshot.value as? FamilySnapshot.Ready)?.state
+        return state?.devices?.firstOrNull { it.id == deviceId }?.name?.ifBlank { null } ?: prefs.pendingPhoneName ?: "A phone"
+    }
+
+    private fun startAutomatic(held: KeyState.Held) = sync.startAutomatic(localNetwork, held.family, held.key, phoneName())
 
     /** Saves a family key (new family, joining, or after removing a lost phone). */
     suspend fun store(family: FamilyId, key: FamilyKey) {

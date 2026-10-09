@@ -160,16 +160,20 @@ private fun OnboardingFlow(graph: AppGraph, family: FamilyViewModel) {
 private fun JoiningFlow(graph: AppGraph, key: KeyState.Held) {
     val syncState by graph.sync.state.collectAsState()
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        graph.sync.start(key.family, key.key, graph.prefs.pendingPhoneName ?: "New phone")
+        graph.sync.startManual(graph.bluetooth, key.family, key.key, graph.phoneName())
     }
     SyncScreen(
         state = syncState,
         phones = emptyList(),
         recalculationText = { "" },
         history = emptyList(),
-        onBack = {},
-        onLook = { permissions.launch(NearbyPermissions.required(Build.VERSION.SDK_INT).toTypedArray()) },
-        onDone = { graph.sync.reset() },
+        onBack = null,
+        onLook = { graph.sync.startManual(graph.localNetwork, key.family, key.key, graph.phoneName()) },
+        onBluetooth = { permissions.launch(NearbyPermissions.required(Build.VERSION.SDK_INT).toTypedArray()) },
+        onDone = { graph.sync.reset(); graph.resumeAutomatic() },
+        title = "Joining the family",
+        intro = "Open House Points on a phone that's already in the family, on the same Wi-Fi. " +
+            "The family's history comes across by itself.",
     )
 }
 
@@ -225,8 +229,11 @@ private fun FamilyFlow(graph: AppGraph, family: FamilyViewModel, state: FamilySt
         NavHost(nav, startDestination = "home") {
             composable("home") {
                 val model = remember(state, today) { HomeModels.from(state, today, formats, locale) }
+                val recalculations by graph.sync.recalculations.collectAsState()
                 HomeScreen(
                     model = model,
+                    notices = recalculations.map { "${state.child(it.child)?.name ?: "A child"} · Interest recalculated: ${formats.signed(it.change)}" },
+                    onDismissNotices = graph.sync::dismissRecalculations,
                     syncLine = lastSync.line,
                     onSettings = { nav.navigate("settings") },
                     onSync = { nav.navigate("sync") },
@@ -380,12 +387,16 @@ private fun SyncRoute(graph: AppGraph, state: FamilyState, formats: Formats, his
     val key by graph.key.collectAsState()
     val syncState by graph.sync.state.collectAsState()
     val held = key as? KeyState.Held
-    val selfName = state.devices.firstOrNull { it.id == graph.deviceId }?.name?.ifBlank { null } ?: "A phone"
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (held != null) graph.sync.start(held.family, held.key, selfName)
+        if (held != null) graph.sync.startManual(graph.bluetooth, held.family, held.key, graph.phoneName())
     }
     val phones = state.devices.filter { !it.removed && it.id != graph.deviceId }.map { device ->
         PhoneRow(device.name.ifBlank { "A phone" }, Relative.lastSyncedWith(history, device.id, graph.clock.now()) ?: "Not synced yet")
+    }
+    fun leave() {
+        graph.sync.reset()
+        graph.resumeAutomatic()
+        onBack()
     }
     SyncScreen(
         state = syncState,
@@ -395,12 +406,10 @@ private fun SyncRoute(graph: AppGraph, state: FamilyState, formats: Formats, his
             "$name · Interest recalculated: ${formats.signed(recalc.change)}"
         },
         history = history.takeLast(HISTORY_SHOWN).asReversed().map { Relative.historyLine(it, state, formats) },
-        onBack = { graph.sync.stop(); graph.sync.reset(); onBack() },
-        onLook = {
-            if (held == null) return@SyncScreen
-            permissions.launch(NearbyPermissions.required(Build.VERSION.SDK_INT).toTypedArray())
-        },
-        onDone = { graph.sync.reset(); onBack() },
+        onBack = ::leave,
+        onLook = { if (held != null) graph.sync.startManual(graph.localNetwork, held.family, held.key, graph.phoneName()) },
+        onBluetooth = { if (held != null) permissions.launch(NearbyPermissions.required(Build.VERSION.SDK_INT).toTypedArray()) },
+        onDone = ::leave,
     )
 }
 

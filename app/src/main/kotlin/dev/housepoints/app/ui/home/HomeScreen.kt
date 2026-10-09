@@ -39,6 +39,8 @@ import dev.housepoints.ledger.DueChore
 @Composable
 fun HomeScreen(
     model: HomeModel,
+    notices: List<String>,
+    onDismissNotices: () -> Unit,
     syncLine: String,
     onSettings: () -> Unit,
     onSync: () -> Unit,
@@ -72,6 +74,13 @@ fun HomeScreen(
         }
         LazyColumn(Modifier.weight(1f)) {
             item { Rule() }
+            items(notices) { notice ->
+                dev.housepoints.app.ui.components.NoticeRow(
+                    notice,
+                    "Entries from the other phone changed a past week's smallest balance, so that week's interest changed too.",
+                    action = { TextAction("OK", onDismissNotices) },
+                )
+            }
             items(model.children, key = { it.id.toString() }) { child ->
                 ChildRow(child, onChild, onRecordDue, onMoreDue)
             }

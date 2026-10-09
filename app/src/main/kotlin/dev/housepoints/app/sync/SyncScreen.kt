@@ -48,18 +48,19 @@ fun SyncScreen(
     phones: List<PhoneRow>,
     recalculationText: (Recalculation) -> String,
     history: List<String>,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onLook: () -> Unit,
+    onBluetooth: () -> Unit,
     onDone: () -> Unit,
+    title: String = "Sync",
+    intro: String = "Phones on the same Wi-Fi sync by themselves while House Points is open on both. " +
+        "Nothing goes over the internet.",
 ) {
     val colors = Hp.colors
     Column(Modifier.fillMaxSize().background(colors.ground)) {
-        TopBar("Sync", onBack)
+        TopBar(title, onBack)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            Text(
-                "Hold both phones close together and open Sync on each. No internet is needed.",
-                style = Hp.type.body, color = colors.inkMuted, modifier = Modifier.padding(Space.l),
-            )
+            Text(intro, style = Hp.type.body, color = colors.inkMuted, modifier = Modifier.padding(Space.l))
             if (phones.isNotEmpty()) {
                 Rule()
                 phones.forEach { phone ->
@@ -81,7 +82,7 @@ fun SyncScreen(
                         CircularProgressIndicator(Modifier.size(20.dp), color = colors.action, strokeWidth = 2.dp)
                         Spacer(Modifier.width(Space.m))
                         Text(
-                            if (state.peers.isEmpty()) "Looking for the other phone…" else "Found ${state.peers.first().name}. Connecting…",
+                            if (state.peers.isEmpty()) "Looking for the other phone. Open House Points on it too." else "Found ${state.peers.first().name.ifBlank { "the other phone" }}. Connecting…",
                             style = Hp.type.body, color = colors.ink,
                         )
                     }
@@ -100,6 +101,13 @@ fun SyncScreen(
                     NoticeRow(recalculationText(recalc), "Entries recorded on the other phone changed a past week's smallest balance, so that week's interest changed too.")
                 }
             }
+            if (state !is SyncState.Searching && state !is SyncState.Syncing) {
+                QuietButton(
+                    "Not on the same Wi-Fi? Use Bluetooth",
+                    onBluetooth,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = Space.l),
+                )
+            }
             if (history.isNotEmpty()) {
                 SectionLabel("Recent syncs")
                 Rule()
@@ -114,7 +122,7 @@ fun SyncScreen(
             label = when (state) {
                 is SyncState.Finished -> "Done"
                 is SyncState.Failed -> "Try again"
-                else -> "Look for the other phone"
+                else -> "Sync now"
             },
             onClick = if (state is SyncState.Finished) onDone else onLook,
             enabled = !busy,

@@ -58,6 +58,17 @@ There are no cycles. `:ledger` and `:sync` are independent of each other, and on
   - With mocked peers: `SyncSession` over a paired in-process `Transport` built on the same framing code.
   - **Live:** two physical phones converge (NFR-PERF-2 measured). *Blocked until a second phone is available*, so the `live-verified` tag waits until then.
 
+## 4a. `:lan` (Android library, added with SAD ADR-9)
+
+- **Depends on:** `:sync`, using the `PeerLink` and `Transport` ports.
+- **Produces:** `LanLink : PeerLink`, `SocketTransport : Transport`, `LanAddresses`.
+- **Acceptance:**
+  - Framing tests over real sockets.
+  - The address rule.
+  - A full `SyncSession` over two `SocketTransport`s converging.
+  - **Live:** a desktop peer (a JVM `SyncSession` over a socket) syncing with the app on the phone over home Wi-Fi.
+  - **Phone-to-phone:** still needs a second phone.
+
 ## 5. `:app` (Android application)
 
 - **Depends on:** everything.
