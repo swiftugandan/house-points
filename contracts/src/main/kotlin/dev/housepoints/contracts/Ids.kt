@@ -44,6 +44,12 @@ public value class EntryId(@Serializable(with = UuidSerializer::class) override 
     override fun toString(): String = uuid.toString()
 }
 
+/** contracts 0.2.0. */
+@JvmInline @Serializable
+public value class RewardId(@Serializable(with = UuidSerializer::class) override val uuid: UUID) : Id {
+    override fun toString(): String = uuid.toString()
+}
+
 @JvmInline @Serializable
 public value class OpId(@Serializable(with = UuidSerializer::class) override val uuid: UUID) : Id {
     override fun toString(): String = uuid.toString()
@@ -64,6 +70,9 @@ public object EntryIds {
         EntryId(Uuids.v5(NAMESPACE, "chore:$chore:$child"))
 
     public fun reversal(of: EntryId): EntryId = EntryId(Uuids.v5(NAMESPACE, "reversal:$of"))
+
+    /** contracts 0.2.0, SPEC FR-50: the maturity payout of a lock, the same on every phone. */
+    public fun lockPayout(lock: EntryId): EntryId = EntryId(Uuids.v5(NAMESPACE, "lock-payout:$lock"))
 
     public fun random(nowMillis: Long): EntryId = EntryId(Uuids.v7(nowMillis))
 }

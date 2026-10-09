@@ -2,7 +2,7 @@
 
 The `:contracts` module (`contracts/`, package `dev.housepoints.contracts`) is the single source of truth for every type that crosses a module boundary or leaves the device. This document explains it. The code is authoritative.
 
-**Version:** `0.1.0`. **Frozen at** tag `contracts/v0.1.0-frozen`. After the freeze, changes need a `contracts/amendment-<desc>` branch and a version bump. Anything that changes stored bytes or payload meaning is a major bump.
+**Version:** `0.2.0`, frozen at `contracts/v0.2.0-frozen`. This is a minor, additive amendment to `0.1.0` (frozen at `contracts/v0.1.0-frozen`); see "Amendment 0.2.0" below. After the freeze, changes need a `contracts/amendment-<desc>` branch and a version bump. Anything that changes stored bytes or payload meaning is a major bump.
 
 ## Policies
 
@@ -51,6 +51,8 @@ Op(opId, familyId, originDevice, originSeq ≥ 1, lamport ≥ 1, schemaVersion, 
 | `ledger.entry` | `EntryRecorded(entryId, childId, kind, points, effectiveAt, note, chore?, valueId?, reverses?, cashOut?)` | Sign rules in the KDoc. A reversal's effect is the negation of its target. |
 | `policy.set` | `PolicySet(policy, effectiveFrom)` | `policy` is one of `exchange{rate}`, `interest{rate, cap?}`, `penalty{mode}`, `minCashOut{minimum}` |
 | `tick.set` | `TickSet(choreId, childId, day, done)` | |
+| `reward.upsert` (0.2.0) | `RewardUpsert(rewardId, title?, icon?, price?, archived?)` | SPEC FR-54 |
+| `policy.lock` (0.2.0) | `LockPolicySet(bonus, effectiveFrom)` | SPEC FR-48. A new payload type rather than a `Policy` variant, so v0.1.0 keeps it as unknown instead of malformed |
 | *(anything else)* | `UnknownPayload(type, json)` | Kept and forwarded (SPEC FR-39) |
 | *(known type, unreadable)* | `MalformedPayload(type, json, reason)` | Kept and forwarded, and affects nothing |
 
@@ -63,6 +65,7 @@ Op(opId, familyId, originDevice, originSeq ≥ 1, lamport ≥ 1, schemaVersion, 
 | `recurringChore` | `chore:{choreId}:{childId}:{yyyy-mm-dd}` |
 | `onceChore` | `chore:{choreId}:{childId}` |
 | `reversal` | `reversal:{entryId}` |
+| `lockPayout` (0.2.0) | `lock-payout:{lockEntryId}` |
 
 The namespace and these name formats are part of the contract.
 
@@ -75,3 +78,18 @@ The namespace and these name formats are part of the contract.
 1. **Adding a payload type** is a minor bump. Older apps keep it as `UnknownPayload`.
 2. **Adding an optional field** to an existing payload is a minor bump. Older apps ignore it when reading, and the stored body keeps it.
 3. **Removing or renaming a field, changing a type string, changing the envelope bytes, or changing a deterministic-ID name format** is a major bump. It needs a new `schemaVersion` or envelope format byte, with migration rules written here first.
+
+## Amendment 0.2.0
+
+**Additive only.** `CURRENT_SCHEMA` stays 1.
+
+- **New optional fields on `EntryRecorded`:**
+  - `lock: LockTerms(weeks, rate, cap)`: on the lock adjustment.
+  - `lockPayout: EntryId`: on the payout or early-break adjustment, pointing at the lock.
+  - `rewardId: RewardId`: on a redemption adjustment.
+- **New ID type:** `RewardId`.
+- **New payload types:** `reward.upsert` and `policy.lock`.
+
+**Why balances can't diverge between versions.** Every balance-changing use of the new fields sits on an `ADJUSTMENT` entry, whose effect is just its signed `points`. A v0.1.0 phone ignores the unknown keys (`ignoreUnknownKeys = true`) and applies the same effect. The ledger's cross-version test (SPEC NFR-DET-4) projects every log twice, once as stored and once with the 0.2.0 additions stripped, and requires identical balances.
+
+**Frozen lock terms.** The payout is computed from the lock entry alone (SPEC FR-47 and FR-49). That keeps payouts recorded on different phones byte-identical under their deterministic ID.
