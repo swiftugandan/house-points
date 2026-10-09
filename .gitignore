@@ -9,3 +9,5 @@ captures/
 !.env.example
 *.keystore
 *.jks
+.claude/
+.kotlin/
