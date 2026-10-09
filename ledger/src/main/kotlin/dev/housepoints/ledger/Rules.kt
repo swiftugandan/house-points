@@ -67,6 +67,9 @@ public object Rules {
         return CashOutVerdict.Allowed(money)
     }
 
+    public fun lock(state: FamilyState, child: ChildId, amount: Points): Verdict = TODO("green")
+    public fun redeem(state: FamilyState, child: ChildId, price: Points): Verdict = TODO("green")
+
     /** Chore credits plus awards in the current week, less deductions already recorded this week. */
     private fun thisWeeksAllowance(account: Account): Points {
         val current = account.current ?: return Points.ZERO

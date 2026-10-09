@@ -146,6 +146,30 @@ class LogBuilder(seed: Long = 1) {
         add(PolicySet(Policy.Interest(RateBp(bp), cap?.let(::Points)), london(from)), device, lamport)
     }
 
+    fun lockBonus(bp: Int, from: InstantMs = InstantMs(0)) {
+        add(dev.housepoints.contracts.LockPolicySet(RateBp(bp), from))
+    }
+
+    fun lock(child: ChildId, points: Long, weeks: Int, rateBp: Int, cap: Long?, at: String, device: DeviceId = phoneA): EntryId {
+        val id = EntryId(Uuids.v7(london(at).value, random.nextInt(), random.nextLong()))
+        add(
+            EntryRecorded(
+                id, child, EntryKind.ADJUSTMENT, Points(-points), london(at), "Locked away for $weeks weeks",
+                lock = dev.housepoints.contracts.LockTerms(weeks, RateBp(rateBp), cap?.let(::Points)),
+            ),
+            device,
+        )
+        return id
+    }
+
+    fun lockReturn(lockId: EntryId, child: ChildId, points: Long, at: InstantMs, id: EntryId, device: DeviceId = phoneA, note: String = "Locked savings back") {
+        add(EntryRecorded(id, child, EntryKind.ADJUSTMENT, Points(points), at, note, lockPayout = lockId), device)
+    }
+
+    fun redeem(child: ChildId, reward: dev.housepoints.contracts.RewardId, price: Long, title: String, at: String) {
+        add(EntryRecorded(EntryId(Uuids.v7(london(at).value, random.nextInt(), random.nextLong())), child, EntryKind.ADJUSTMENT, Points(-price), london(at), "Reward: $title", rewardId = reward))
+    }
+
     fun penalty(mode: PenaltyMode, from: InstantMs = InstantMs(0)) {
         add(PolicySet(Policy.Penalty(mode), from))
     }

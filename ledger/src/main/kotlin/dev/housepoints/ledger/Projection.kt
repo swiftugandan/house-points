@@ -140,6 +140,8 @@ public object Projection {
                     entries[payload.entryId] = CanonicalEntry(payload, op, key)
                 }
                 is PolicySet -> addPolicy(payload, op, key)
+                is dev.housepoints.contracts.RewardUpsert -> TODO("green")
+                is dev.housepoints.contracts.LockPolicySet -> TODO("green")
                 is UnknownPayload -> unknownCount++
                 is MalformedPayload -> malformed += Flag.MalformedEntry(op.opId, "unreadable ${payload.type}: ${payload.reason}")
             }
