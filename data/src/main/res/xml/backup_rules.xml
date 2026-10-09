@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 11 and lower (android:fullBackupContent). Only the op log database is backed up.
+    The device identity and the wrapped family key live in noBackupFilesDir, which Auto Backup always
+    excludes (SPEC FR-2, FR-45; SAD §3.4).
+-->
+<full-backup-content>
+    <include domain="database" path="." />
+</full-backup-content>
