@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The jar: lid, body and three coins, drawn on the 108dp adaptive-icon canvas (safe zone 66dp). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="3.5"
+        android:strokeLineJoin="round" android:strokeLineCap="round"
+        android:pathData="M44,34 v5 c0,4 -14,6 -14,16 v20 c0,5 3,8 8,8 h32 c5,0 8,-3 8,-8 v-20 c0,-10 -14,-12 -14,-16 v-5" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="3.5"
+        android:strokeLineJoin="round" android:pathData="M41,27 h26 v7 h-26 z" />
+    <path android:fillColor="#E3B55B" android:pathData="M42,76 a12,3.5 0 1,0 24,0 a12,3.5 0 1,0 -24,0 z" />
+    <path android:fillColor="#E3B55B" android:pathData="M42,70 a12,3.5 0 1,0 24,0 a12,3.5 0 1,0 -24,0 z" />
+    <path android:fillColor="#E3B55B" android:pathData="M42,64 a12,3.5 0 1,0 24,0 a12,3.5 0 1,0 -24,0 z" />
+</vector>

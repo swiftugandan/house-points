@@ -144,9 +144,11 @@ Parents want to run a points economy for their children that teaches three thing
   - a payload.
 
   Ordering and conflict resolution MUST use `(lamport, deviceId)` and MUST NOT use wall-clock time.
-- **FR-34:** Two paired devices that are near each other MUST be able to sync over Nearby Connections, which works fully offline over Bluetooth, BLE and Wi-Fi [R8].
-  - Each side sends a version vector (`deviceId → highest contiguous originSeq`) and receives the ops it is missing.
-  - Applying ops MUST be idempotent, commutative and associative, so that any order and any repetition of syncs between any number of devices ends in the same state. These are the convergence conditions for a grow-only-set CRDT [R9].
+- **FR-34:** Two paired devices MUST be able to sync without the internet over either link:
+  - **Same Wi-Fi (default, amended 2026-10-09):** while House Points is open on both phones on the same local network, they find each other with mDNS/DNS-SD and sync automatically over a direct TCP connection between home-network addresses. Families confirmed their phones always share home Wi-Fi.
+  - **Fallback:** Nearby Connections over Bluetooth, BLE and Wi-Fi Direct [R8], started from the Sync screen.
+
+  Each side sends a version vector (`deviceId → highest contiguous originSeq`) and receives the ops it is missing. Applying ops MUST be idempotent, commutative and associative, so that any order and any repetition of syncs between any number of devices ends in the same state. These are the convergence conditions for a grow-only-set CRDT [R9].
 - **FR-35:** Child, chore, value and goal records, and expected-chore ticks, are **last-writer-wins registers per field**, ordered by `(lamport, deviceId)` [R9].
 - **FR-36:** Merging MUST NOT reject any op. Rules that apply at the moment of recording (FR-13, FR-14) are checked only on the device doing the recording. If merged state breaks a rule (a negative balance, possible duplicates), the app MUST show it as a flag for a parent. It MUST NOT correct it automatically.
 - **FR-37:** After each sync, for each child whose displayed balance changed for any reason other than the new entries themselves, the app MUST show the size of the interest recalculation, e.g. "Interest recalculated: −1".
@@ -245,7 +247,7 @@ This starts from Example 1. Award E (+100, Wed 7 Oct 18:00) was a mistake. While
 
 This starts from Example 1. On Tue 20 Oct, a parent sets the interest rate to 200 bp, effective Wed 21 Oct 00:00 (during W3).
 - W3 uses the policy in force at its start, Mon 19 Oct: 100 bp. Interest 2.02, close 204.02.
-- W4 uses the policy in force at Mon 26 Oct: 200 bp. Interest is 204.02 × 2% = 4.0804, close **208.1006** (shown as 208).
+- W4 uses the policy in force at Mon 26 Oct: 200 bp. Interest is 204.02 × 2% = 4.0804, close **208.1004** (shown as 208).
 
 ### Example 5: both parents pay out the same savings
 
@@ -294,6 +296,7 @@ While apart, phone A (lamport 40) sets the interest rate to 150 bp and phone B (
 - **NFR-SEC-1:** Sync sessions MUST mutually authenticate both devices as holders of the family key, and MUST protect every message with authenticated encryption keyed from the family key. Nearby Connections' own encryption [R8] counts only as transport protection, because it isn't tied to the family key.
   - *Threat model:* spoofing and information disclosure (STRIDE) by any nearby Bluetooth or Wi-Fi device.
 - **NFR-SEC-2:** No data MUST leave the device except to authenticated paired devices, through Android backup when the user has turned it on, or through an export the parent starts. The app MUST NOT contain analytics, advertising, crash reporting to a network, or accounts.
+  - *Amended 2026-10-09:* the local-network link needs Android's `INTERNET` permission, which Android requires for any socket. So this NFR is verified by code review and by the link's address rules, not by the manifest. The link listens on and connects to site-local, link-local and unique-local addresses only, it advertises a hash of the family id rather than the id, and it carries only sessions encrypted under the family key (NFR-SEC-1).
 - **NFR-SEC-3:** Data on the device relies on Android's file-based encryption [R14], kept in app-private storage.
 - **NFR-SEC-4:** The child view limits what a child can do *inside the app*. It does not stop a child leaving the app, because an app that isn't managed by a device administrator can only request screen pinning, and the user can exit that [R11]. The app MUST NOT claim otherwise.
 
@@ -344,7 +347,7 @@ Decided by default on the user's go-ahead (2026-10-09). Revisit before any relea
 Still open. These are technical spikes and don't block the rules:
 
 - [ ] **OQ-4 (spike):** Nearby Connections throughput on two real phones (NFR-PERF-2). Needs a second device.
-- [ ] **OQ-5 (spike):** Can the app leave out the `INTERNET` permission while using Nearby Connections? Resolve by inspecting the merged manifest at build time.
+- [x] **OQ-5:** Superseded by the local-network link (FR-34 amendment), which needs `INTERNET`. See NFR-SEC-2.
 
 ## References
 

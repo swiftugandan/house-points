@@ -38,6 +38,7 @@ There are no servers, no accounts and no analytics (NG-2, NFR-SEC-2).
   :app  (Android application: Compose UI, ViewModels, navigation, platform services)
     │
     ├──▶ :data     (Android library: SQLite op log, device identity, family key vault, export file)
+    ├──▶ :lan      (Android library: mDNS discovery + TCP, the default PeerLink on shared Wi-Fi)
     ├──▶ :nearby   (Android library: Nearby Connections implementation of the Transport port)
     │
     ├──▶ :sync     (pure JVM: sync protocol state machine, crypto, version vectors, OpLog & Transport ports)
@@ -61,6 +62,7 @@ The pure-JVM modules contain everything that decides a number, so the rules from
 | `:ledger` | `(ops, asOf) → FamilyState`: balances, interest, policies, projections, flags, recording rules | `FamilyState`, `Ledger.validate…` | `Op`, payloads |
 | `:sync` | Lamport clock, version vectors, authenticated encrypted sync session, op creation | `SyncSession`, `OpFactory`, ports `OpLog` and `Transport` | `Op` |
 | `:data` | Durable, atomic op storage, device identity, family key custody, encrypted export and import | `SqliteOpLog : OpLog`, `DeviceIdentityStore`, `FamilyKeyVault`, `ExportCodec` | `:sync` ports |
+| `:lan` | Same-Wi-Fi discovery (NSD) and TCP transport | `LanLink : PeerLink`, `SocketTransport : Transport` | `:sync` ports |
 | `:nearby` | Discovery, advertising, connection, framed bytes over Nearby | `NearbyTransport : Transport`, `NearbyLink` | `:sync` ports |
 | `:app` | Screens from `DESIGN.md`, ViewModels, child view gate, payday notification, statement images, permissions | The APK | everything |
 
@@ -170,6 +172,22 @@ They are requested only on the Sync screen, with a plain explanation.
 **Failure modes.** Discovery times out after 60 s with an explicit message. A connection rejected or lost mid-session is surfaced as `SyncOutcome.Interrupted`.
 
 **Live verification needs two physical devices** (see `PLAN.md`).
+
+### 3.5a `:lan`
+
+**Structure.**
+- `LanLink : PeerLink`: while `peers()` is collected, it listens on an ephemeral TCP port and registers `_housepoints._tcp` with NSD. The TXT attributes are `f` (the family tag: 16 hex characters of SHA-256 over the family id), `d` (the device id) and `n` (the name). It discovers the same service type, resolves matches one at a time, and keeps peers with the same tag and a home-network address. It holds a Wi-Fi multicast lock while discovering.
+- `SocketTransport : Transport`: one TCP connection carrying `u32 length ‖ frame`. A frame over 1 MiB closes the connection.
+- `LanAddresses`: the address rule (site-local, link-local, loopback and IPv6 unique-local only) and the family tag.
+
+**Who connects.** The phone with the lower `DeviceId` dials. The other only accepts. This holds for Nearby too, so two phones never open sessions to each other at the same moment.
+
+**Automatic sync.** While the app is on screen, `SyncController.startAutomatic` runs the local-network link. The dialling phone syncs:
+- when the other phone appears
+- 3 s after anything is recorded
+- every 60 s while the other phone is visible.
+
+**Failure modes.** A network without multicast (some guest Wi-Fi) means no peers are found, so the Sync screen offers Bluetooth. A connection lost mid-session is the same `Interrupted` outcome as on any transport.
 
 ### 3.6 `:app`
 
@@ -304,6 +322,11 @@ interface Transport {
   - Generation uses ZXing core.
   - Scanning uses the Google code scanner, which runs inside Play Services and so needs no camera permission.
   - QR payload: `hp1:` followed by base64url of `familyId(16) ‖ familyKey(32)`.
+
+- **ADR-9: The local network is the default link, and Nearby is the fallback.**
+  - The family confirmed both phones are always on the same home Wi-Fi.
+  - mDNS and TCP need no Bluetooth or location permission. They can sync automatically while the app is open, and they're faster and easier to test.
+  - The cost is the `INTERNET` permission (see NFR-SEC-2). It's mitigated by the address rule, by advertising a hashed family tag, and by every session being authenticated and encrypted under the family key.
 
 ---
 

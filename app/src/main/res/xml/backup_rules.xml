@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and lower (SPEC FR-45). Device identity and the family key live in noBackupFilesDir, which is always excluded. -->
+<full-backup-content>
+    <include domain="database" path="." />
+    <include domain="file" path="." />
+</full-backup-content>

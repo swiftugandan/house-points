@@ -10,7 +10,7 @@ Children earn points, the points grow if they leave them alone, and they can swa
 
 Only parents. The app lives on parents' phones. Children don't need a device: when a child wants to see their account, a parent opens the **child view** and hands over the phone.
 
-Any number of parents' phones can join one family. They stay in agreement by syncing directly, phone to phone, whenever they are near each other. No internet connection, account or server is involved.
+Any number of parents' phones can join one family. While the app is open on phones that share the home Wi-Fi, they sync with each other directly, without going through the internet. If they're ever on different networks, they can sync over Bluetooth instead. No account or server is involved.
 
 ## Earning points
 
