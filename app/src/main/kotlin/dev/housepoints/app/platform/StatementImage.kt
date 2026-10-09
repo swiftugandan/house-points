@@ -73,6 +73,7 @@ class StatementImage(private val context: Context) {
         row("Started with", null, model.startedWith)
         row("Earned", model.earnedDetail, model.earned)
         row("Spent or taken away", model.spentDetail, model.spent)
+        model.locked?.let { row("Locked savings", null, it) }
         y += 20f
 
         // Interest stamp

@@ -41,9 +41,11 @@ import dev.housepoints.contracts.EntryKind
 import dev.housepoints.contracts.MinorUnits
 import dev.housepoints.contracts.Points
 import dev.housepoints.ledger.FamilyState
+import dev.housepoints.ledger.Flows
 import dev.housepoints.ledger.Interest
 import dev.housepoints.ledger.LedgerLine
 import dev.housepoints.ledger.PeriodSummary
+import dev.housepoints.ledger.movesLockedSavings
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -59,6 +61,8 @@ data class StatementModel(
     val earnedDetail: String?,
     val spent: String,
     val spentDetail: String?,
+    /** Points moved into (negative) or back from (positive) locked savings; null when nothing moved. */
+    val locked: String?,
     val interest: String,
     val interestDetail: String,
     val closing: String,
@@ -74,17 +78,19 @@ object Statements {
         val inWeek = account.lines.filter { it.entry.effectiveAt >= period.start && it.entry.effectiveAt < period.end && it.reversedBy == null && it.entry.kind != EntryKind.REVERSAL }
         val cashOuts = inWeek.filter { it.entry.kind == EntryKind.CASH_OUT }.mapNotNull { it.entry.cashOut }
         val cashedMoney = cashOuts.fold(0L) { sum, c -> sum + c.money.value }
-        val earnedCount = inWeek.count { it.effect.value > 0 }
+        val earnedCount = inWeek.count { it.effect.value > 0 && !it.entry.movesLockedSavings }
+        val flows = Flows.of(account, period.start, period.end)
         return StatementModel(
             childName = record.name,
             colorIndex = record.colorIndex,
             weekLabel = formats.weekRange(period.startDate) + " " + period.startDate.year,
             paydayLabel = formats.longDay(period.startDate.plusWeeks(1)),
             startedWith = formats.points(period.opening.floorPoints()),
-            earned = formats.signed(period.credits),
+            earned = formats.signed(flows.earned),
             earnedDetail = when (earnedCount) { 0 -> null; 1 -> "1 entry"; else -> "$earnedCount entries" },
-            spent = formats.signed(period.debits),
+            spent = formats.signed(flows.spent),
             spentDetail = if (cashedMoney > 0) formats.money(MinorUnits(cashedMoney), family.currency) + " cashed out" else null,
+            locked = flows.locked.takeIf { it != Points.ZERO || inWeek.any { line -> line.entry.movesLockedSavings } }?.let { formats.signed(it) },
             interest = if (period.interest.value == 0L) "0" else formats.signedDecimal(period.interest.value),
             interestDetail = interestDetail(period, formats),
             closing = formats.points(period.closing.floorPoints()),
@@ -159,6 +165,10 @@ fun StatementScreen(model: StatementModel, animate: Boolean, onClose: () -> Unit
                     StatementLine("Earned", model.earnedDetail, model.earned)
                     Rule()
                     StatementLine("Spent or taken away", model.spentDetail, model.spent)
+                    model.locked?.let {
+                        Rule()
+                        StatementLine("Locked savings", null, it)
+                    }
                 }
                 Column(
                     Modifier.fillMaxWidth().alpha(stamp.value).scale(1.06f - 0.06f * stamp.value)

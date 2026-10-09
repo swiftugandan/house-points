@@ -64,7 +64,7 @@ fun LockSheet(
                 "Locked points earn a higher rate and can't be spent until they come back. $childName has ${formats.points(available)} points.",
                 style = Hp.type.body, color = Hp.colors.inkMuted,
             )
-            Stepper("Points", formats.points(Points(points)), onMinus = { points = (points - STEP).coerceAtLeast(Locks.MINIMUM.value) }, onPlus = { points += STEP })
+            Stepper("Points", formats.points(Points(points)), onMinus = { points = (points - STEP).coerceAtLeast(Locks.MINIMUM.value) }, onPlus = { points = (points + STEP).coerceAtMost(maxOf(Locks.MINIMUM.value, available.value)) })
             Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
                 Text("For", style = Hp.type.label, color = Hp.colors.inkMuted)
                 Segmented(TERMS.map { it to "$it weeks" }, weeks, { weeks = it })
