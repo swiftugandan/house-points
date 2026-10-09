@@ -49,6 +49,7 @@ fun MoneyRules(state: FamilyState, formats: Formats, now: InstantMs, onBack: () 
     var pointsPerMajor by rememberSaveable { mutableStateOf(pointsPerMajor(exchange, family.currency)) }
     var penalty by rememberSaveable { mutableStateOf(state.policies.penaltyAt(now)) }
     var minimum by rememberSaveable { mutableStateOf(state.policies.minCashOutAt(now).value) }
+    var lockBonus by rememberSaveable { mutableStateOf(state.policies.lockBonusAt(now).value) }
 
     val yearOn200 = (1..WEEKS_IN_YEAR).fold(Points(EXAMPLE).toMicropoints()) { balance, _ ->
         balance + Interest.on(balance, RateBp(rateBp), if (cap > 0) Points(cap) else null)
@@ -94,6 +95,14 @@ fun MoneyRules(state: FamilyState, formats: Formats, now: InstantMs, onBack: () 
             }
             Rule()
             Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
+                Stepper("Locked savings earn an extra", formats.percent(lockBonus), onMinus = { lockBonus = (lockBonus - RATE_STEP).coerceAtLeast(0) }, onPlus = { lockBonus = (lockBonus + RATE_STEP).coerceAtMost(RateBp.MAX) })
+                Text(
+                    "Points locked away for 4, 8 or 12 weeks earn ${formats.percent(rateBp + lockBonus)} a week. A change applies to new locks only.",
+                    style = Hp.type.caption, color = Hp.colors.inkMuted,
+                )
+            }
+            Rule()
+            Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
                 Text("Taking points away", style = Hp.type.label, color = Hp.colors.inkMuted)
                 Segmented(listOf(PenaltyMode.NONE to "Never", PenaltyMode.CURRENT_WEEK to "This week's", PenaltyMode.ANY to "Any"), penalty, { penalty = it })
                 Text(
@@ -113,6 +122,7 @@ fun MoneyRules(state: FamilyState, formats: Formats, now: InstantMs, onBack: () 
                 if (exchange == null || reduce(newRate) != reduce(exchange)) add(FamilyActions.setExchange(newRate, now))
                 if (penalty != state.policies.penaltyAt(now)) add(FamilyActions.setPenaltyMode(penalty, now))
                 if (minimum != state.policies.minCashOutAt(now).value) add(FamilyActions.setMinCashOut(Points(minimum), now))
+                if (lockBonus != state.policies.lockBonusAt(now).value) add(FamilyActions.setLockBonus(RateBp(lockBonus), now))
             }
             perform(actions)
             onBack()

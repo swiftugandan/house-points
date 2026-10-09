@@ -269,6 +269,71 @@ Opening balance 300. A CASH_OUT −300 and an AWARD +300 are both effective Thu 
 
 While apart, phone A (lamport 40) sets the interest rate to 150 bp and phone B (lamport 42) sets it to 50 bp, both effective Mon 2 Nov 00:00. After the sync, both phones use **50 bp** from W5 onward (FR-31), and the policy history shows A's change as superseded.
 
+## Amendment 1 (v0.2.0): locked savings, rewards shop, home-screen widget
+
+Added 2026-10-09. Every new balance-changing entry is an **adjustment** (`ledger.entry`, kind `ADJUSTMENT`) carrying new *optional* fields. So a phone still on v0.1.0, which ignores those fields, computes exactly the same balances and interest (FR-39 and NFR-DET-1 across versions). New non-balance data uses new payload types, which v0.1.0 keeps as unknown.
+
+### Locked savings
+
+- **FR-47:** A parent MAY lock part of a child's balance for 4, 8 or 12 weeks. The lock is an adjustment of `−P` points, made when the parent records it. It carries **frozen terms**: `weeks`, `rate` and `cap`. The rate is the interest rate in force plus the lock bonus (FR-48). The cap is the interest cap in force. `P` MUST be at least 100 points and at most the recording phone's view of `floor(balance)`.
+  - *Rationale for freezing:* a payout recorded by any phone MUST be a pure function of the lock entry alone, so two phones never record different amounts under the same ID.
+- **FR-48:** The lock bonus is a dated setting (payload `policy.lock`, default +100 bp). It only affects the terms of **new** locks.
+- **FR-49:** The pot does not earn during the week the lock was made. It earns for exactly `weeks` whole periods, starting with the next one: `B₀ = P`, then each week `Bₖ = Bₖ₋₁ + floor(clamp(Bₖ₋₁, 0, cap) × rate / 10 000)` in micropoints. At the end of the last of those weeks (the **maturity payday**) the payout is `floor(B_weeks)` whole points.
+- **FR-50:** At or after maturity, a phone running v0.2.0 or later MUST record the payout. It is an adjustment of `+payout` at the maturity instant, with the deterministic ID `UUIDv5("lock-payout:{lockEntryId}")` and `lockPayout = lockEntryId`. Two phones recording it independently therefore produce one entry. A payout effective at the start of a week does not earn main-account interest until the next week, as with any entry effective at a period start (FR-24).
+- **FR-51:** Breaking a lock early returns `+P` at the moment it's recorded, with `lockPayout = lockEntryId` and no interest. It is not a reversal, because a reversal would retroactively pay main-account interest for the locked weeks. Once any in-force entry references a lock through `lockPayout`, no maturity payout is due for it.
+- **FR-52:** A lock with an in-force payout or break MUST NOT be reversed on its own. Reversing it reverses the lock and every in-force `lockPayout` entry for it, in one recorded action. A payout whose lock is reversed while the payout is not is flagged for a parent (FR-36), never corrected automatically.
+- **FR-53:** Wherever a balance is shown, the locked amount MUST be shown next to it: "Locked away: 500 · back Mon 16 Nov with about 41 more". Children must never think points have vanished.
+
+### Rewards shop
+
+- **FR-54:** A family MAY keep a catalogue of rewards (payload `reward.upsert`: title, icon, price, archived; per-field last-writer-wins).
+- **FR-55:** Redeeming a reward is an adjustment of `−price`, with the note `Reward: {title}` and `rewardId`. It is checked like a cash-out against the recording phone's balance, but has no minimum. On v0.1.0 it reads as "Adjustment · Reward: …" with the same effect.
+
+### Widget
+
+- **FR-44 (now built):** The home-screen widget lists each non-archived child's name and displayed balance, in creation order and never sorted by balance (DESIGN.md bans comparing siblings). Tapping it opens the app.
+
+### Compatibility invariant
+
+- **NFR-DET-4:** For every op log, projecting it as v0.2.0 and projecting it with every v0.2.0 addition removed (the new optional fields stripped, the new payload types dropped) MUST give identical balances and period summaries for every child. This is a permanent test.
+
+### Worked examples (acceptance tests)
+
+Same setup as before (Europe/London, Monday weeks, 1% a week, cap 2,000, 1 point = 1p), with the lock bonus at its default +100 bp.
+
+#### Example L1: a four-week lock
+
+- Ada holds 1,000 from before 12 Oct, with interest switched off before 12 Oct so the figures stay round.
+- On Wed 14 Oct at 12:00 a parent locks 500 for 4 weeks.
+- The terms are frozen: rate 200 bp, cap 2,000.
+
+| | Main account | Pot |
+|---|---|---|
+| Week of 12 Oct | 1,000 → 500 on Wed. Lowest 500, interest 5, closes 505. | Not earning yet |
+| Week of 19 Oct | | +10 → 510 |
+| Week of 26 Oct | | +10.2 → 520.2 |
+| Week of 2 Nov | | +10.404 → 530.604 |
+| Week of 9 Nov | | +10.61208 → 541.21608 |
+| Mon 16 Nov 00:00 | Payout **541** (`floor`) credited. It earns main interest from the week of 23 Nov. | Closed |
+
+Recording the payout twice, once on each phone, leaves one entry.
+
+#### Example L2: breaking the lock early
+
+Same lock. On Wed 28 Oct at 18:00 a parent breaks it:
+- An adjustment of +500 is recorded at that instant.
+- No pot interest is paid.
+- No payout falls due on 16 Nov.
+- In the week of 26 Oct the main account's lowest balance is unaffected by the break, because the break raises the balance.
+
+#### Example L3: reversing a matured lock
+
+After L1's payout, reversing the lock produces two reversals: the −500 and the +541, both cancelled at their own instants. The main account is then as if the lock never happened, and that week's interest is recalculated. Trying to reverse only the lock is refused.
+
+#### Example R1: a reward
+
+Tom has 120 points. Redeeming "Screen time, 30 minutes" (price 50) records an adjustment of −50 with the note "Reward: Screen time, 30 minutes". He now has 70. A redemption of more than his balance is refused.
+
 ## Non-functional requirements
 
 ### Determinism and correctness

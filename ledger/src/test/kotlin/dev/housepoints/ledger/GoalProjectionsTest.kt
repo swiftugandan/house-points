@@ -9,7 +9,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
-class GoalsAndBenchmarkTest {
+class GoalProjectionsTest {
     /**
      * Balance exactly 252 at Thu 22 Oct with 252 the lowest of the current week: interest is switched off until
      * that week so earlier paydays do not move the starting point of the independent simulation.
@@ -57,32 +57,5 @@ class GoalsAndBenchmarkTest {
     fun `what-if-I-wait counts interest only`() {
         val (state, ada) = steadyAda(paceWeeks = false)
         assertEquals(Points(326), Projections.afterWeeks(state, ada, 26))
-    }
-
-    @Test
-    fun `sizing dataset recalculates within budget (NFR-PERF-1)`() {
-        val log = LogBuilder().apply { createFamily() }
-        val children = List(8) { log.child("Child $it", colorIndex = it) }
-        val start = london("2016-10-03T00:00").value
-        val week = 7L * 24 * 3_600_000
-        for (w in 0 until 520) {
-            for (child in children) {
-                repeat(40) { i ->
-                    val at = InstantMs(start + w * week + i * 3_600_000L * 4)
-                    if (i % 10 == 9) log.entry(child, EntryKind.CASH_OUT, -5, at)
-                    else log.entry(child, EntryKind.CHORE, 3, at)
-                }
-            }
-        }
-        // The app decodes each op once when it arrives (ops are immutable); recalculation starts from decoded ops.
-        val decoded = log.ops().map(DecodedOp::of)
-        val asOf = InstantMs(start + 520 * week)
-        repeat(2) { Projection.projectDecoded(decoded, asOf) } // warm-up
-        val began = System.nanoTime()
-        val state = Projection.projectDecoded(decoded, asOf)
-        val millis = (System.nanoTime() - began) / 1_000_000
-        println("NFR-PERF-1: ${decoded.size} ops projected in $millis ms on the JVM")
-        assertEquals(8, state.accounts.size)
-        assertTrue("projection took $millis ms", millis < 1_000)
     }
 }

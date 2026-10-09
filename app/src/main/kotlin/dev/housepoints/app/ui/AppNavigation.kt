@@ -142,7 +142,7 @@ internal suspend fun offerUndo(snackbar: SnackbarHostState, family: FamilyViewMo
     val state = family.state() ?: return
     outcome.entries.forEach { entry ->
         val line = state.account(entry.childId)?.lines?.firstOrNull { it.entry.entryId == entry.entryId } ?: return@forEach
-        family.execute(FamilyActions.reverse(line, "Undone straight away"))
+        family.execute(FamilyActions.reverse(state, line, "Undone straight away"))
     }
 }
 

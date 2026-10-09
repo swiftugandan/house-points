@@ -27,6 +27,12 @@ public object PayloadType {
     public const val ENTRY_RECORDED: String = "ledger.entry"
     public const val POLICY_SET: String = "policy.set"
     public const val TICK_SET: String = "tick.set"
+
+    /** contracts 0.2.0. */
+    public const val REWARD_UPSERT: String = "reward.upsert"
+
+    /** contracts 0.2.0. */
+    public const val LOCK_POLICY_SET: String = "policy.lock"
 }
 
 @Serializable
@@ -133,7 +139,31 @@ public data class EntryRecorded(
     val valueId: ValueId? = null,
     val reverses: EntryId? = null,
     val cashOut: CashOut? = null,
+    /** contracts 0.2.0, SPEC FR-47: on the adjustment that locks points away. */
+    val lock: LockTerms? = null,
+    /** contracts 0.2.0, SPEC FR-50/51: on the adjustment that returns a lock's points (payout or early break). */
+    val lockPayout: EntryId? = null,
+    /** contracts 0.2.0, SPEC FR-55: on the adjustment that redeems a reward. */
+    val rewardId: RewardId? = null,
 ) : Payload
+
+/** A lock's frozen terms (SPEC FR-47): the payout depends on these and the lock entry alone. */
+@Serializable
+public data class LockTerms(val weeks: Int, val rate: RateBp, val cap: Points?)
+
+/** contracts 0.2.0, SPEC FR-54. Per-field last-writer-wins, like the other upserts. */
+@Serializable
+public data class RewardUpsert(
+    val rewardId: RewardId,
+    val title: String? = null,
+    val icon: IconKey? = null,
+    val price: Points? = null,
+    val archived: Boolean? = null,
+) : Payload
+
+/** contracts 0.2.0, SPEC FR-48: the bonus on top of the interest rate for new locks, from [effectiveFrom]. */
+@Serializable
+public data class LockPolicySet(val bonus: RateBp, val effectiveFrom: InstantMs) : Payload
 
 @Serializable
 public sealed interface Policy {

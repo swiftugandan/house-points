@@ -46,6 +46,14 @@ Points are worth real money at a rate the family chooses. The default is **1 poi
 
 The gap between the two dates is the lesson.
 
+## Locking some away (since 0.2)
+
+A parent can lock part of a child's balance for 4, 8 or 12 weeks at a higher rate: by default one percentage point a week more. The locked points can't be spent. They come back on the last payday with their interest, and the app records that by itself. Breaking a lock early returns the points straight away, but the interest is lost, which is the lesson. A child always sees what's locked and when it comes back, so points never seem to vanish.
+
+## The rewards shop (since 0.2)
+
+A family can list treats such as screen time, choosing dinner or a trip out, each with a price in points. Spending points on one is recorded like a cash-out.
+
 ## Cashing out
 
 When a child wants money, a parent records the cash-out and hands over the money (cash, a bank transfer, whatever suits). The app never touches real money. It only keeps the record.
@@ -75,8 +83,6 @@ Each child gets one of two display styles, chosen by a parent (not worked out fr
 - Any server, cloud account or internet requirement.
 - Moving real money or linking to banks.
 - iPhone. Android only, because parents' phones sync using a Google Play Services feature.
-- Locked savings (a fixed-term deposit at a higher rate). Planned for later.
-- A rewards shop for non-cash treats like screen time. Planned for later.
 - Streaks, badges, levels and confetti. These turn a bank into a game, and the point is that it's *not* a game.
 
 ## References

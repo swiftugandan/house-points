@@ -9,6 +9,8 @@ import dev.housepoints.ledger.Chores
 import dev.housepoints.ledger.DueChore
 import dev.housepoints.ledger.FamilyState
 import dev.housepoints.ledger.Flag
+import dev.housepoints.ledger.LockStatus
+import dev.housepoints.ledger.Locks
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -49,7 +51,7 @@ object HomeModels {
                 name = child.name,
                 colorIndex = child.colorIndex,
                 balance = formats.points(account?.displayed ?: Points.ZERO),
-                weekLine = if (earned > Points.ZERO) "${formats.signed(earned)} this week" else "Nothing yet this week",
+                weekLine = weekLine(state, child.id, earned, formats),
                 overdrawn = child.id in overdrawn,
                 due = due.take(DUE_SHOWN).map {
                     HomeDue(it, it.chore.icon, "Record ${it.chore.title} for ${child.name}, ${formats.points(it.chore.points)} points")
@@ -64,6 +66,13 @@ object HomeModels {
             bountyCount = Chores.bounties(state).size,
             paydayLine = paydayLine(state, locale),
         )
+    }
+
+    private fun weekLine(state: FamilyState, child: ChildId, earned: Points, formats: Formats): String {
+        val week = if (earned > Points.ZERO) "${formats.signed(earned)} this week" else "Nothing yet this week"
+        val locked = Locks.forChild(state, child).filter { it.status == LockStatus.LOCKED || it.status == LockStatus.DUE }
+            .fold(Points.ZERO) { sum, lock -> sum + lock.principal }
+        return if (locked > Points.ZERO) "$week · ${formats.points(locked)} locked" else week
     }
 
     private fun paydayLine(state: FamilyState, locale: Locale): String? {

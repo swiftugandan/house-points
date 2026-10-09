@@ -40,22 +40,27 @@ import dev.housepoints.app.ui.components.PickTile
 import dev.housepoints.app.ui.components.QuietButton
 import dev.housepoints.app.ui.components.Rule
 import dev.housepoints.app.ui.components.Segmented
+import dev.housepoints.app.ui.components.Stepper
 import dev.housepoints.app.ui.components.TextAction
 import dev.housepoints.app.ui.components.TopBar
+import dev.housepoints.app.ui.format.Formats
 import dev.housepoints.app.ui.onboarding.Field
 import dev.housepoints.app.ui.theme.Hp
 import dev.housepoints.app.ui.theme.Radius
 import dev.housepoints.app.ui.theme.Space
 import dev.housepoints.contracts.DisplayStyle
 import dev.housepoints.contracts.IconKey
+import dev.housepoints.contracts.Points
 import dev.housepoints.ledger.ChildRecord
 import dev.housepoints.ledger.FamilyState
+import dev.housepoints.ledger.RewardRecord
 import dev.housepoints.ledger.ValueRecord
 
 enum class SettingsPage(val title: String, val detail: String, val icon: () -> ImageVector) {
     CHILDREN("Children", "Names, colours and how each one sees their account", { HpIcons.of(IconKey("people")) }),
     JOBS("Jobs", "Paid, unpaid and bounty jobs", { HpIcons.of(IconKey("bin")) }),
     VALUES("Family values", "What behaviour awards are for", { HpIcons.of(IconKey("heart")) }),
+    REWARDS("Rewards shop", "Treats children can spend points on", { HpIcons.of(IconKey("gift")) }),
     MONEY("Money rules", "Interest, exchange rate, taking points away", { HpIcons.of(IconKey("star")) }),
     PHONES("Phones", "Pair a phone, remove a lost one", { HpIcons.Phone }),
     BACKUP("Back up", "Save or restore an encrypted copy", { HpIcons.Share }),
@@ -216,3 +221,56 @@ fun IconGrid(keys: List<String>, selected: IconKey, columns: Int = 6, onSelect: 
 }
 
 private val VALUE_ICONS = listOf("heart", "shield", "mountain", "star", "people", "smile", "book", "music", "gift", "plant", "dog", "pencil")
+
+/** SPEC FR-54: the family's rewards shop. */
+@Composable
+fun RewardsSettings(state: FamilyState, formats: Formats, onBack: () -> Unit, perform: (Action) -> Unit) {
+    var editing by remember { mutableStateOf<RewardRecord?>(null) }
+    var adding by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize().background(Hp.colors.ground)) {
+        TopBar("Rewards shop", onBack)
+        Text(
+            "Treats a child can spend points on instead of money: screen time, choosing dinner, a trip out. Spending one is recorded like a cash-out.",
+            style = Hp.type.body, color = Hp.colors.inkMuted, modifier = Modifier.padding(Space.l),
+        )
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Rule()
+            state.rewards.filter { !it.archived }.forEach { reward ->
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 56.dp).background(Hp.colors.surface).clickable { editing = reward }.padding(horizontal = Space.l),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(HpIcons.of(reward.icon), contentDescription = null, tint = Hp.colors.ink, modifier = Modifier.size(24.dp))
+                    Spacer(Modifier.width(Space.m))
+                    Text(reward.title, style = Hp.type.body, color = Hp.colors.ink, modifier = Modifier.weight(1f))
+                    Text(formats.points(reward.price), style = Hp.type.figure, color = Hp.colors.ink)
+                }
+                Rule()
+            }
+        }
+        OutcomeButton("Add a reward", { adding = true }, icon = HpIcons.Plus, modifier = Modifier.navigationBarsPadding().padding(Space.l))
+    }
+    if (adding || editing != null) RewardEditSheet(editing, formats, onDismiss = { adding = false; editing = null }, perform = perform)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RewardEditSheet(reward: RewardRecord?, formats: Formats, onDismiss: () -> Unit, perform: (Action) -> Unit) {
+    var title by rememberSaveable { mutableStateOf(reward?.title ?: "") }
+    var icon by remember { mutableStateOf(reward?.icon ?: IconKey("gift")) }
+    var price by rememberSaveable { mutableStateOf(reward?.price?.value ?: DEFAULT_PRICE) }
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = Hp.colors.surface, shape = Radius.sheet) {
+        Column(Modifier.fillMaxWidth().imePadding().navigationBarsPadding().padding(horizontal = Space.l, vertical = Space.s), verticalArrangement = Arrangement.spacedBy(Space.l)) {
+            Text(if (reward == null) "New reward" else "Edit ${reward.title}", style = Hp.type.headline, color = Hp.colors.ink)
+            Field("What", title, { title = it }, placeholder = "e.g. Screen time, 30 minutes")
+            IconGrid(REWARD_ICONS, icon) { icon = it }
+            Stepper("Price", formats.points(Points(price)), onMinus = { price = (price - PRICE_STEP).coerceAtLeast(PRICE_STEP) }, onPlus = { price += PRICE_STEP })
+            OutcomeButton("Save", enabled = title.isNotBlank(), onClick = { perform(FamilyActions.saveReward(reward?.id, title, icon, Points(price))); onDismiss() })
+            if (reward != null) QuietButton("Remove ${reward.title}", { perform(FamilyActions.archiveReward(reward.id)); onDismiss() }, modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+private val REWARD_ICONS = listOf("gift", "music", "book", "bike", "kite", "headphones", "star", "smile", "table", "dog", "car", "plant")
+private const val DEFAULT_PRICE = 50L
+private const val PRICE_STEP = 10L

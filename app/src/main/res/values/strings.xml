@@ -2,4 +2,5 @@
 <resources>
     <string name="payday_channel">Payday</string>
     <string name="payday_channel_description">A reminder when the week closes and interest is paid.</string>
+    <string name="widget_description">Each child\'s balance at a glance.</string>
 </resources>

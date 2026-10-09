@@ -1,6 +1,7 @@
 package dev.housepoints.app.ui.account
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,6 +71,7 @@ import dev.housepoints.contracts.ChoreId
 import dev.housepoints.contracts.IconKey
 import dev.housepoints.contracts.Points
 import dev.housepoints.ledger.LedgerLine
+import dev.housepoints.ledger.Locks
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 
@@ -83,6 +85,8 @@ fun AccountScreen(
     onPayday: (LocalDate) -> Unit,
     onTick: (ExpectedTick) -> Unit,
     onGoal: () -> Unit,
+    onLockAway: () -> Unit,
+    onLock: (LockRow) -> Unit,
 ) {
     val colors = Hp.colors
     Column(Modifier.fillMaxSize().background(colors.ground)) {
@@ -103,11 +107,30 @@ fun AccountScreen(
                             }
                             ProgressBar(goal.fraction, colors.child(model.colorIndex).fill, "Goal progress ${goal.progress}")
                         }
-                        TextAction("Change goal", onGoal, inset = false)
-                    } else {
-                        TextAction("Set a savings goal", onGoal, inset = false)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(Space.xl)) {
+                        TextAction(if (goal != null) "Change goal" else "Set a savings goal", onGoal, inset = false)
+                        if (model.balance >= Locks.MINIMUM) TextAction("Lock some away", onLockAway, inset = false)
                     }
                     Text(model.paydayLine, style = Hp.type.caption, color = colors.interest)
+                }
+            }
+            if (model.locks.isNotEmpty()) {
+                item { Rule() }
+                items(model.locks, key = { "lock" + it.lock.lockId }) { lock ->
+                    Row(
+                        Modifier.fillMaxWidth().heightIn(min = 64.dp).background(colors.surface).clickable { onLock(lock) }.padding(horizontal = Space.l),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(HpIcons.Lock, contentDescription = null, tint = colors.interest, modifier = Modifier.size(22.dp))
+                        Spacer(Modifier.width(Space.m))
+                        Column(Modifier.weight(1f)) {
+                            Text(lock.title, style = Hp.type.title.copy(fontSize = Hp.type.body.fontSize), color = colors.ink)
+                            Text(lock.detail, style = Hp.type.caption, color = colors.interest)
+                        }
+                        Icon(HpIcons.ChevronRight, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(20.dp))
+                    }
+                    Rule()
                 }
             }
             items(model.notices) { notice ->
@@ -158,6 +181,7 @@ fun LineSheet(
     title: String,
     detail: String,
     recordedBy: String,
+    reversal: (reason: String) -> Action,
     perform: suspend (Action) -> Outcome,
     onDismiss: () -> Unit,
 ) {
@@ -182,7 +206,7 @@ fun LineSheet(
                 refusal?.let { Text(Refusals.text(it), style = Hp.type.body, color = Hp.colors.deduct) }
                 OutcomeButton("Reverse this entry", onClick = {
                     scope.launch {
-                        when (val outcome = perform(FamilyActions.reverse(line, reason))) {
+                        when (val outcome = perform(reversal(reason))) {
                             is Outcome.Recorded -> { sheet.hide(); onDismiss() }
                             is Outcome.Refused -> refusal = outcome.reason
                             Outcome.NoFamily -> onDismiss()

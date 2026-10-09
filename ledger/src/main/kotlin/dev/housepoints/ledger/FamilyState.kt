@@ -41,6 +41,7 @@ public data class FamilyState(
     val policies: PolicyTimeline,
     val accounts: Map<ChildId, Account>,
     val flags: List<Flag>,
+    val rewards: List<RewardRecord>,
 ) {
     public fun child(id: ChildId): ChildRecord? = children.firstOrNull { it.id == id }
     public fun chore(id: ChoreId): ChoreRecord? = chores.firstOrNull { it.id == id }
@@ -93,6 +94,8 @@ public data class GoalRecord(
     val target: Points,
     val status: GoalStatus,
 )
+
+public data class RewardRecord(val id: dev.housepoints.contracts.RewardId, val title: String, val icon: IconKey, val price: Points, val archived: Boolean)
 
 public data class TickKey(val chore: ChoreId, val child: ChildId, val day: LocalDate)
 
@@ -176,4 +179,7 @@ public sealed interface Flag {
 
     /** Ops this version does not understand: another phone runs a newer version (SPEC FR-39). */
     public data class NewerVersionSeen(val unknownOps: Int) : Flag
+
+    /** SPEC FR-52: a payout or early break whose lock has been reversed while it has not. */
+    public data class OrphanedLockReturn(val child: ChildId, val entry: EntryId) : Flag
 }

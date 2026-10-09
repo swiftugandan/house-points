@@ -45,6 +45,8 @@ public object OpCodec {
         PayloadType.ENTRY_RECORDED to EntryRecorded.serializer(),
         PayloadType.POLICY_SET to PolicySet.serializer(),
         PayloadType.TICK_SET to TickSet.serializer(),
+        PayloadType.REWARD_UPSERT to RewardUpsert.serializer(),
+        PayloadType.LOCK_POLICY_SET to LockPolicySet.serializer(),
     )
 
     /** The `(type, body)` pair to put in a new op. */
@@ -59,6 +61,8 @@ public object OpCodec {
         is EntryRecorded -> PayloadType.ENTRY_RECORDED to json.encodeToString(EntryRecorded.serializer(), payload)
         is PolicySet -> PayloadType.POLICY_SET to json.encodeToString(PolicySet.serializer(), payload)
         is TickSet -> PayloadType.TICK_SET to json.encodeToString(TickSet.serializer(), payload)
+        is RewardUpsert -> PayloadType.REWARD_UPSERT to json.encodeToString(RewardUpsert.serializer(), payload)
+        is LockPolicySet -> PayloadType.LOCK_POLICY_SET to json.encodeToString(LockPolicySet.serializer(), payload)
         is UnknownPayload -> payload.type to payload.json
         is MalformedPayload -> payload.type to payload.json
     }

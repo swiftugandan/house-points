@@ -6,6 +6,7 @@ import dev.housepoints.app.ui.format.Formats
 import dev.housepoints.contracts.ChildId
 import dev.housepoints.contracts.ChoreKind
 import dev.housepoints.contracts.EntryKind
+import dev.housepoints.contracts.EntryRecorded
 import dev.housepoints.contracts.IconKey
 import dev.housepoints.contracts.InstantMs
 import dev.housepoints.contracts.Micropoints
@@ -16,6 +17,10 @@ import dev.housepoints.ledger.ExpectedChore
 import dev.housepoints.ledger.FamilyState
 import dev.housepoints.ledger.Flag
 import dev.housepoints.ledger.LedgerLine
+import dev.housepoints.ledger.Lock
+import dev.housepoints.ledger.LockStatus
+import dev.housepoints.ledger.Locks
+import dev.housepoints.contracts.EntryIds
 import dev.housepoints.ledger.PeriodSummary
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -33,7 +38,11 @@ data class AccountModel(
     val notices: List<Notice>,
     val expected: List<ExpectedChore>,
     val weeks: List<WeekModel>,
+    val locks: List<LockRow>,
 )
+
+/** SPEC FR-53: a lock as the parent sees it, with what it will bring back. */
+data class LockRow(val lock: Lock, val title: String, val detail: String)
 
 data class GoalModel(val title: String, val icon: IconKey, val fraction: Float, val progress: String)
 
@@ -73,12 +82,22 @@ object AccountModels {
             notices = notices(state, child, formats, locale),
             expected = Chores.expectedFor(state, child, today),
             weeks = account?.let { weeks(state, it, formats) }.orEmpty(),
+            locks = lockRows(state, child, formats),
         )
     }
 
+    fun lockRows(state: FamilyState, child: ChildId, formats: Formats): List<LockRow> =
+        Locks.forChild(state, child).filter { it.status == LockStatus.LOCKED || it.status == LockStatus.DUE }.map { lock ->
+            LockRow(
+                lock,
+                title = "Locked away: ${formats.points(lock.principal)}",
+                detail = if (lock.status == LockStatus.DUE) "Coming back now, with ${formats.points(lock.interest)} more"
+                else "Back ${formats.dayShortMonth(lock.maturity)} with about ${formats.points(lock.interest)} more",
+            )
+        }
+
     fun lineModel(state: FamilyState, line: LedgerLine, formats: Formats): LedgerRowModel {
         val entry = line.entry
-        val family = state.family
         val (title, note, kind) = when (entry.kind) {
             EntryKind.CHORE -> {
                 val chore = entry.chore?.let { state.chore(it.choreId) }
@@ -89,22 +108,42 @@ object AccountModels {
             )
             EntryKind.DEDUCTION -> Triple("Taken away", entry.note, LedgerRowKind.DEDUCTION)
             EntryKind.CASH_OUT -> Triple("Cash out", null, LedgerRowKind.NORMAL)
-            EntryKind.ADJUSTMENT -> Triple("Adjustment", entry.note, LedgerRowKind.NORMAL)
+            EntryKind.ADJUSTMENT -> adjustmentTitle(state, entry)
             EntryKind.REVERSAL -> Triple("Correction", "Reversed: ${entry.note}", LedgerRowKind.REVERSAL)
         }
+        return rowModel(state, line, formats, title, note, kind)
+    }
+
+    private fun adjustmentTitle(state: FamilyState, entry: EntryRecorded): Triple<String, String?, LedgerRowKind> {
+        val lock = entry.lock
+        val returned = entry.lockPayout
+        val reward = entry.rewardId
+        return when {
+            lock != null -> Triple("Locked away · ${lock.weeks} weeks", null, LedgerRowKind.NORMAL)
+            returned != null && entry.entryId == EntryIds.lockPayout(returned) -> Triple("Locked savings back", null, LedgerRowKind.NORMAL)
+            returned != null -> Triple("Lock broken early", "Points back, no interest", LedgerRowKind.NORMAL)
+            reward != null -> {
+                val title = state.rewards.firstOrNull { it.id == reward }?.title ?: entry.note.removePrefix("Reward: ")
+                Triple("Reward · $title", null, LedgerRowKind.NORMAL)
+            }
+            else -> Triple("Adjustment", entry.note, LedgerRowKind.NORMAL)
+        }
+    }
+
+    private fun rowModel(state: FamilyState, line: LedgerLine, formats: Formats, title: String, note: String?, kind: LedgerRowKind): LedgerRowModel {
+        val entry = line.entry
         val reversalNote = if (line.reversedBy != null) {
             val reason = state.account(entry.childId)?.lines?.firstOrNull { it.entry.entryId == line.reversedBy }?.entry?.note
             "Reversed" + (reason?.let { ": $it" } ?: "")
         } else {
             null
         }
-        val money = entry.cashOut?.let { "${formats.money(it.money, it.currency)} paid" }
         return LedgerRowModel(
             date = formats.shortDay(entry.effectiveAt),
             title = title,
             note = reversalNote ?: note,
             amount = formats.signed(line.effect),
-            amountSub = money.takeIf { family != null },
+            amountSub = entry.cashOut?.let { "${formats.money(it.money, it.currency)} paid" },
             kind = kind,
             reversed = line.reversedBy != null,
         )
