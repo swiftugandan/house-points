@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -42,6 +42,7 @@ import dev.housepoints.app.family.FamilyActions
 import dev.housepoints.app.ui.components.Avatar
 import dev.housepoints.app.ui.components.DoneBadge
 import dev.housepoints.app.ui.components.HpIcons
+import dev.housepoints.app.ui.components.IconAction
 import dev.housepoints.app.ui.components.OutcomeButton
 import dev.housepoints.app.ui.components.QuietButton
 import dev.housepoints.app.ui.components.Rule
@@ -94,7 +95,7 @@ fun CreateFamilyScreen(defaultCurrency: CurrencyCode, defaultWeekStart: DayOfWee
         verticalArrangement = Arrangement.spacedBy(Space.xl),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            dev.housepoints.app.ui.components.IconAction(HpIcons.Back, "Back", onBack)
+            IconAction(HpIcons.Back, "Back", onBack)
             Text("Start a family", style = Hp.type.headline, color = Hp.colors.ink, modifier = Modifier.semantics { heading() })
         }
         Field("Family name", name, { name = it })
@@ -156,7 +157,7 @@ fun AddChildrenScreen(state: FamilyState, onAdd: (Action) -> Unit, onNext: () ->
             Modifier.weight(1f).statusBarsPadding().verticalScroll(rememberScrollState()),
         ) {
             Row(Modifier.padding(start = if (onBack != null) Space.xs else Space.l, top = Space.m, end = Space.l), verticalAlignment = Alignment.CenterVertically) {
-                if (onBack != null) dev.housepoints.app.ui.components.IconAction(HpIcons.Back, "Back", onBack)
+                if (onBack != null) IconAction(HpIcons.Back, "Back", onBack)
                 Text("Children", style = Hp.type.headline, color = Hp.colors.ink, modifier = Modifier.semantics { heading() })
             }
             Spacer(Modifier.size(Space.l))

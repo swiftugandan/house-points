@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -138,7 +139,7 @@ private class JarGeometry(size: Size) {
     }
 }
 
-private fun DrawScope.drawJar(g: JarGeometry, ink: androidx.compose.ui.graphics.Color, lid: androidx.compose.ui.graphics.Color, glass: androidx.compose.ui.graphics.Color) {
+private fun DrawScope.drawJar(g: JarGeometry, ink: Color, lid: Color, glass: Color) {
     val u = g.unitPx
     val body = Path().apply {
         moveTo(92f * u, 44f * u)
@@ -158,7 +159,7 @@ private fun DrawScope.drawJar(g: JarGeometry, ink: androidx.compose.ui.graphics.
     drawRoundRect(ink, topLeft = Offset(78f * u, 14f * u), size = Size(124f * u, 30f * u), cornerRadius = CornerRadius(6f * u), style = Stroke(g.stroke.toPx()))
 }
 
-private fun DrawScope.drawCoins(g: JarGeometry, layout: JarLayout, shown: Float, partial: Boolean, colour: ChildColor, ink: androidx.compose.ui.graphics.Color) {
+private fun DrawScope.drawCoins(g: JarGeometry, layout: JarLayout, shown: Float, partial: Boolean, colour: ChildColor, ink: Color) {
     val whole = shown.toInt()
     val size = g.coinSize(layout)
     val strokePx = 1.5.dp.toPx()
@@ -177,7 +178,7 @@ private fun DrawScope.drawCoins(g: JarGeometry, layout: JarLayout, shown: Float,
     }
 }
 
-private fun DrawScope.drawGoalLine(g: JarGeometry, layout: JarLayout, goalCoins: Int, ink: androidx.compose.ui.graphics.Color) {
+private fun DrawScope.drawGoalLine(g: JarGeometry, layout: JarLayout, goalCoins: Int, ink: Color) {
     val y = g.levelTop(layout, goalCoins)
     drawLine(
         ink, Offset(g.left + 8f * g.unitPx, y), Offset(g.right - 8f * g.unitPx, y),

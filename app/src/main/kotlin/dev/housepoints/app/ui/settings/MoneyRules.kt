@@ -25,8 +25,10 @@ import dev.housepoints.app.ui.components.TopBar
 import dev.housepoints.app.ui.format.Formats
 import dev.housepoints.app.ui.theme.Hp
 import dev.housepoints.app.ui.theme.Space
+import dev.housepoints.contracts.CurrencyCode
 import dev.housepoints.contracts.ExchangeRate
 import dev.housepoints.contracts.InstantMs
+import dev.housepoints.contracts.MinorUnits
 import dev.housepoints.contracts.PenaltyMode
 import dev.housepoints.contracts.Points
 import dev.housepoints.contracts.RateBp
@@ -74,7 +76,7 @@ fun MoneyRules(state: FamilyState, formats: Formats, now: InstantMs, onBack: () 
             }
             Rule()
             Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
-                val one = formats.money(dev.housepoints.contracts.MinorUnits(minorPerMajor), family.currency)
+                val one = formats.money(MinorUnits(minorPerMajor), family.currency)
                 Stepper("Points per $one", formats.points(Points(pointsPerMajor)), onMinus = { pointsPerMajor = (pointsPerMajor - EXCHANGE_STEP).coerceAtLeast(EXCHANGE_STEP) }, onPlus = { pointsPerMajor += EXCHANGE_STEP })
                 val newRate = ExchangeRate(pointsPerMajor, minorPerMajor)
                 if (exchange != null && newRate != exchange && reduce(newRate) != reduce(exchange)) {
@@ -118,10 +120,10 @@ fun MoneyRules(state: FamilyState, formats: Formats, now: InstantMs, onBack: () 
     }
 }
 
-private fun minorPerMajor(currency: dev.housepoints.contracts.CurrencyCode): Long =
+private fun minorPerMajor(currency: CurrencyCode): Long =
     (0 until (currency.toCurrency()?.defaultFractionDigits?.coerceAtLeast(0) ?: 2)).fold(1L) { acc, _ -> acc * 10 }
 
-private fun pointsPerMajor(rate: ExchangeRate?, currency: dev.housepoints.contracts.CurrencyCode): Long {
+private fun pointsPerMajor(rate: ExchangeRate?, currency: CurrencyCode): Long {
     val minor = minorPerMajor(currency)
     if (rate == null || !rate.isValid) return minor
     return (minor * rate.points / rate.minorUnits).coerceAtLeast(1)

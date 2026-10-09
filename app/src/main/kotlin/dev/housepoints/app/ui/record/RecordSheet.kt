@@ -2,6 +2,7 @@ package dev.housepoints.app.ui.record
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
@@ -63,15 +63,17 @@ import dev.housepoints.app.ui.theme.Space
 import dev.housepoints.contracts.ChildId
 import dev.housepoints.contracts.ChoreId
 import dev.housepoints.contracts.ChoreKind
+import dev.housepoints.contracts.EntryRecorded
 import dev.housepoints.contracts.InstantMs
 import dev.housepoints.contracts.PenaltyMode
 import dev.housepoints.contracts.Points
 import dev.housepoints.contracts.ValueId
 import dev.housepoints.ledger.Chores
+import dev.housepoints.ledger.DenialReason
 import dev.housepoints.ledger.FamilyState
 import dev.housepoints.ledger.Rules
-import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 enum class RecordTab(val label: String) { CHORE("Chore"), AWARD("Award"), CASH_OUT("Cash out"), TAKE_AWAY("Deduct") }
 
@@ -108,7 +110,7 @@ fun RecordSheet(
                     onDismiss()
                 }
                 is Outcome.Refused -> refusal = outcome.reason
-                Outcome.NoFamily -> refusal = Refusal.Rule(dev.housepoints.ledger.DenialReason.NO_FAMILY)
+                Outcome.NoFamily -> refusal = Refusal.Rule(DenialReason.NO_FAMILY)
             }
         }
     }
@@ -275,7 +277,7 @@ private fun ChoreDetail(
             val due = Chores.dueFor(state, child, day).firstOrNull { it.chore.id == picked.id }
             val action = if (due != null) FamilyActions.recordDueChore(child, due, instant) else FamilyActions.recordBounty(state, setOf(child), picked.id, instant)
             (action as? Action.Record)?.payloads.orEmpty()
-        }.filter { (it as? dev.housepoints.contracts.EntryRecorded)?.entryId !in alreadyThere }
+        }.filter { (it as? EntryRecorded)?.entryId !in alreadyThere }
         if (payloads.isEmpty()) refuse(Refusal.AlreadyRecorded) else submit(Action.Record(payloads))
     })
 }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -34,6 +35,7 @@ import dev.housepoints.app.ui.components.QuietButton
 import dev.housepoints.app.ui.components.Rule
 import dev.housepoints.app.ui.components.SectionLabel
 import dev.housepoints.app.ui.components.TopBar
+import dev.housepoints.app.ui.onboarding.Field
 import dev.housepoints.app.ui.theme.Hp
 import dev.housepoints.app.ui.theme.Radius
 import dev.housepoints.app.ui.theme.Space
@@ -153,7 +155,7 @@ fun PairingCodeView(code: String, modifier: Modifier = Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Space.m)) {
         Image(
             bitmap, contentDescription = null, filterQuality = FilterQuality.None,
-            modifier = Modifier.fillMaxWidth(0.8f).aspectRatio(1f).background(androidx.compose.ui.graphics.Color.White, Radius.medium)
+            modifier = Modifier.fillMaxWidth(0.8f).aspectRatio(1f).background(Color.White, Radius.medium)
                 .semantics { contentDescription = "Pairing QR code" },
         )
         Text("Scan this with the other phone: Settings, Phones, or \"Join the family\" on a new phone.", style = Hp.type.caption, color = Hp.colors.inkMuted)
@@ -170,9 +172,9 @@ fun JoinScreen(onBack: () -> Unit, onScan: () -> Unit, codeText: String, onCodeT
                 "On a phone already in the family, open Settings, Phones, Show pairing code. Then scan it here.",
                 style = Hp.type.body, color = Hp.colors.inkMuted,
             )
-            dev.housepoints.app.ui.onboarding.Field("This phone belongs to", phoneName, onPhoneName, placeholder = "e.g. Alex's phone")
+            Field("This phone belongs to", phoneName, onPhoneName, placeholder = "e.g. Alex's phone")
             QuietButton("Scan the pairing code", onScan, icon = HpIcons.Qr, modifier = Modifier.fillMaxWidth(), enabled = phoneName.isNotBlank())
-            dev.housepoints.app.ui.onboarding.Field("Or paste the code", codeText, onCodeText, placeholder = "hp1:…")
+            Field("Or paste the code", codeText, onCodeText, placeholder = "hp1:…")
             if (error != null) Text(error, style = Hp.type.body, color = Hp.colors.deduct)
         }
         OutcomeButton("Use this code", onUseCode, enabled = codeText.isNotBlank() && phoneName.isNotBlank(), modifier = Modifier.navigationBarsPadding().padding(Space.l))

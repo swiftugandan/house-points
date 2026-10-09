@@ -13,6 +13,7 @@ import dev.housepoints.contracts.Uuids
 import dev.housepoints.data.SyncHistoryEntry
 import dev.housepoints.data.SyncHistoryStore
 import dev.housepoints.ledger.FamilyState
+import dev.housepoints.nearby.NearbyException
 import dev.housepoints.sync.FamilyKey
 import dev.housepoints.sync.LinkPeer
 import dev.housepoints.sync.OpLog
@@ -20,6 +21,7 @@ import dev.housepoints.sync.PeerLink
 import dev.housepoints.sync.SyncOutcome
 import dev.housepoints.sync.SyncSession
 import dev.housepoints.sync.Transport
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -33,7 +35,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
-import java.io.IOException
 
 sealed interface SyncState {
     data object Idle : SyncState
@@ -199,7 +200,7 @@ class SyncController(
     }
 
     private fun explain(e: IOException): String = when (e) {
-        is dev.housepoints.nearby.NearbyException ->
+        is NearbyException ->
             "This phone couldn't use Bluetooth or Wi-Fi to look for the other phone. Check that Bluetooth, Wi-Fi and Location are on, then try again."
         else -> "The phones lost touch before they finished. Anything that arrived is kept; try again to send the rest."
     }

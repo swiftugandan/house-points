@@ -2,7 +2,6 @@ package dev.housepoints.app.ui.account
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -66,11 +66,12 @@ import dev.housepoints.app.ui.theme.Hp
 import dev.housepoints.app.ui.theme.Radius
 import dev.housepoints.app.ui.theme.Space
 import dev.housepoints.contracts.ChildId
+import dev.housepoints.contracts.ChoreId
 import dev.housepoints.contracts.IconKey
 import dev.housepoints.contracts.Points
 import dev.housepoints.ledger.LedgerLine
-import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 @Composable
 fun AccountScreen(
@@ -147,7 +148,7 @@ fun AccountScreen(
     }
 }
 
-data class ExpectedTick(val child: ChildId, val chore: dev.housepoints.contracts.ChoreId, val done: Boolean)
+data class ExpectedTick(val child: ChildId, val chore: ChoreId, val done: Boolean)
 
 /** One entry, with the only thing you can do to the past: reverse it, with a reason (SPEC FR-16). */
 @OptIn(ExperimentalMaterial3Api::class)
