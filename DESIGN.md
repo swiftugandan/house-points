@@ -88,10 +88,14 @@ There are three families, all under the SIL Open Font License and bundled in the
 | `headline` | 26 / 32 | Bricolage 600 | Screen titles, child name in child view |
 | `title` | 18 / 24 | Atkinson Next 700 | Row titles, sheet sections |
 | `body` | 16 / 24 | Atkinson Next 400 | Notes, explanations |
-| `label` | 14 / 20 | Atkinson Next 700 | Buttons, segmented controls |
+| `label` | 14 / 20 | Atkinson Next 700 | Buttons, segmented controls, section labels |
+| `caption` | 14 / 20 | Atkinson Next 400, `ink-muted` | Notes under rows, "+50 this week", "£1.50 paid" |
 | `figure` | 16 / 24 | Atkinson Mono 400 | Ledger amounts and dates |
-| `figure-strong` | 16 / 24 | Atkinson Mono 600 | Week totals, payday line |
+| `figure-strong` | 16 / 24 | Atkinson Mono 600 | Week totals, payday line, balances in lists |
+| `figure-large` | 26 / 32 | Atkinson Mono 600 | Points stepper, "what if" result, statement interest |
 | `picture-label` | 22 / 28 | Atkinson Next 700 | Picture style: any text at all |
+
+Avatar initials are Bricolage 700 at about 45% of the disc diameter (22 on a 48 disc, 18 on a 40 disc).
 
 The smallest text anywhere is 14 sp. There's no all-caps text except currency codes. Headings never use italics.
 

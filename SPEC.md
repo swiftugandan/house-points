@@ -53,7 +53,7 @@ Parents want to run a points economy for their children that teaches three thing
   - **interest only:** no further entries
   - **at current pace:** adds, each week, the mean net non-interest change over the last 4 completed weeks.
 
-  If a projection doesn't reach the target within 520 weeks, the app MUST show "more than 10 years" for it, and "not at current pace" when that pace is zero or negative.
+  If fewer than 4 completed weeks exist, the mean is taken over those that do exist. With no completed weeks, the app shows "not yet" for the at-current-pace date. If a projection doesn't reach the target within 520 weeks, the app MUST show "more than 10 years" for it, and "not at current pace" when that pace is zero or negative.
   - *Rationale:* 4 weeks smooths out a single unusual week while still reflecting recent behaviour. The 10-year horizon bounds the calculation, and nothing beyond it means anything to a child.
 
 ### Recording
