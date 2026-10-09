@@ -81,11 +81,16 @@ There are no cycles. `:ledger` and `:sync` are independent of each other, and on
   - Installed on the connected phone, a parent can create a family, add three children and chores, record entries, see balances and interest matching `:ledger`, open both child views, and share a statement.
   - Both themes are checked with screenshots.
 
+## 0.2.0 (SPEC Amendment 1)
+
+- **Built:** locked savings, the rewards shop and the widget.
+- **Tests:** `:ledger` passes L1 to L3, R1 and the cross-version invariant, and `:app` covers the actions, presentation and repository settling.
+- **On the device:** locks, rewards and the child views were exercised. The widget is registered but hasn't been placed on a home screen yet.
+
 ## Deferred (recorded, not forgotten)
 
 - **`:lan` live over Wi-Fi between two phones:** the test network had client isolation.
 
-- Home-screen widget (FR-44, SHOULD).
 - `:nearby` live verification and the OQ-4 measurement: these need a second phone.
 
 ---

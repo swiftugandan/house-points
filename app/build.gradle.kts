@@ -13,8 +13,8 @@ android {
         applicationId = "dev.housepoints"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
     // Release signing comes from Gradle properties kept outside the repository (e.g. ~/.gradle/gradle.properties):
@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.play.services.code.scanner)
     implementation(libs.zxing.core)
+    implementation(libs.glance.appwidget)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

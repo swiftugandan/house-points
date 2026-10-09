@@ -192,6 +192,12 @@ Motion is restrained and serves a purpose. Every animation respects the system "
 - Interest is always described as "1% a week on the smallest amount you had all week".
 - Use a hyphen or "to" for ranges. Keep dashes rare.
 
+## Locks, rewards and the widget (0.2)
+
+- **Locks** use the brass interest colour and the lock icon, because a lock is interest-in-waiting. Wherever a balance appears, its locked amount sits beside it (SPEC FR-53): a lock row on the account ("Locked away: 500 · Back Mon 16 Nov with about 41 more"), "· 500 locked" on Home, and a line in the child view.
+- **Rewards** live under the Record sheet's **Spend** tab (Money / A reward), so spending stays one decision.
+- **The widget** uses the colour tokens but system type: Android widgets can't load bundled fonts. It lists children in the order they were added and never ranks them.
+
 ## Large text
 
 At a system font scale of 1.5 or more, segmented controls stack into a full-width list rather than clip their labels. Fixed-width labels are not used anywhere (NFR-A11Y-2).

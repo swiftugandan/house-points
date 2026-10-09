@@ -25,6 +25,9 @@ import dev.housepoints.app.ui.account.AccountModels
 import dev.housepoints.app.ui.account.AccountScreen
 import dev.housepoints.app.ui.account.GoalSheet
 import dev.housepoints.app.ui.account.LineSheet
+import dev.housepoints.app.ui.account.LockDetailSheet
+import dev.housepoints.app.ui.account.LockRow
+import dev.housepoints.app.ui.account.LockSheet
 import dev.housepoints.app.ui.account.NoScreenLockSheet
 import dev.housepoints.app.ui.format.Formats
 import dev.housepoints.app.ui.home.HomeModels
@@ -37,6 +40,7 @@ import dev.housepoints.app.ui.settings.ChildrenSettings
 import dev.housepoints.app.ui.settings.ChoreEditor
 import dev.housepoints.app.ui.settings.JobsSettings
 import dev.housepoints.app.ui.settings.MoneyRules
+import dev.housepoints.app.ui.settings.RewardsSettings
 import dev.housepoints.app.ui.settings.SettingsScreen
 import dev.housepoints.app.ui.settings.ValuesSettings
 import dev.housepoints.contracts.ChildId
@@ -132,6 +136,7 @@ private fun NavGraphBuilder.settingsDestinations(f: FamilyScope) {
         ChoreEditor(f.state, chore, f.formats, f.locale, onBack = f::back, perform = { f.family.perform(it) })
     }
     composable(Routes.settings("values")) { ValuesSettings(f.state, onBack = f::back, perform = { f.family.perform(it) }) }
+    composable(Routes.settings("rewards")) { RewardsSettings(f.state, f.formats, onBack = f::back, perform = { f.family.perform(it) }) }
     composable(Routes.settings("money")) {
         MoneyRules(f.state, f.formats, f.family.now(), onBack = f::back, perform = { actions ->
             f.family.perform(Action.Record(actions.flatMap { (it as? Action.Record)?.payloads.orEmpty() }))
@@ -176,6 +181,8 @@ private fun AccountRoute(f: FamilyScope, child: ChildId) {
     var line by remember { mutableStateOf<LedgerLine?>(null) }
     var goal by remember { mutableStateOf(false) }
     var noLock by remember { mutableStateOf(false) }
+    var lockAway by remember { mutableStateOf(false) }
+    var lockRow by remember { mutableStateOf<LockRow?>(null) }
     fun handOver() = context.startActivity(ChildActivity.intent(context, child))
     AccountScreen(
         model = model,
@@ -186,7 +193,13 @@ private fun AccountRoute(f: FamilyScope, child: ChildId) {
         onPayday = { week -> f.nav.navigate(Routes.payday(child, week)) },
         onTick = { tick -> f.family.perform(FamilyActions.tick(tick.chore, tick.child, f.today, tick.done)) },
         onGoal = { goal = true },
+        onLockAway = { lockAway = true },
+        onLock = { lockRow = it },
     )
+    if (lockAway) {
+        LockSheet(f.state, child, model.name, f.formats, f.family::now, f.family::execute) { lockAway = false }
+    }
+    lockRow?.let { row -> LockDetailSheet(row, f.formats, f.family::now, f.family::execute) { lockRow = null } }
     line?.let { selected -> EntrySheet(f, selected) { line = null } }
     if (noLock) {
         NoScreenLockSheet(model.name, onHandOver = { noLock = false; handOver() }, onDismiss = { noLock = false })

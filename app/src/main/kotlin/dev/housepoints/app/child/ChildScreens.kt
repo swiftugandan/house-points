@@ -114,7 +114,12 @@ fun NumberView(model: ChildViewModel, afterWeeks: (Int) -> Points, formatPoints:
     Column(Modifier.fillMaxSize().background(Hp.colors.ground)) {
         ChildHeader(model, onExit)
         LazyColumn(Modifier.weight(1f)) {
-            item { Balance(model.balance, model.balanceText, model.worth, Modifier.padding(Space.l)) }
+            item {
+                Column(Modifier.padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
+                    Balance(model.balance, model.balanceText, model.worth)
+                    model.lockedLine?.let { Text(it, style = Hp.type.body, color = Hp.colors.interest) }
+                }
+            }
             if (model.goalTitle != null) {
                 item {
                     Rule()

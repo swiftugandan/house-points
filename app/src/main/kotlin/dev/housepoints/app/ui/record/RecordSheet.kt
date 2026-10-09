@@ -72,10 +72,11 @@ import dev.housepoints.ledger.Chores
 import dev.housepoints.ledger.DenialReason
 import dev.housepoints.ledger.FamilyState
 import dev.housepoints.ledger.Rules
+import dev.housepoints.ledger.RewardRecord
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 
-enum class RecordTab(val label: String) { CHORE("Chore"), AWARD("Award"), CASH_OUT("Cash out"), TAKE_AWAY("Deduct") }
+enum class RecordTab(val label: String) { CHORE("Chore"), AWARD("Award"), CASH_OUT("Spend"), TAKE_AWAY("Deduct") }
 
 /** DESIGN.md "Record sheet": Who → What → Detail → one outcome button. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -169,7 +170,7 @@ fun RecordSheet(
             when (tab) {
                 RecordTab.CHORE -> ChoreDetail(state, day, selected, at, formats, refusal, ::submit) { refusal = it }
                 RecordTab.AWARD -> AwardDetail(state, selected, at, formats, refusal, ::submit)
-                RecordTab.CASH_OUT -> CashOutDetail(state, selected.firstOrNull(), now, formats, lastSyncNotice, refusal, ::submit)
+                RecordTab.CASH_OUT -> SpendDetail(state, selected.firstOrNull(), now, formats, lastSyncNotice, refusal, ::submit)
                 RecordTab.TAKE_AWAY -> TakeAwayDetail(state, selected.firstOrNull(), now, formats, refusal, ::submit)
             }
         }
@@ -307,6 +308,58 @@ private fun AwardDetail(state: FamilyState, selected: Set<ChildId>, at: () -> In
         if (selected.isEmpty()) "Choose who" else "Add ${formats.points(Points(points))}$each to ${names(state, selected)}",
         enabled = selected.isNotEmpty(),
         onClick = { submit(FamilyActions.award(selected, valueId, Points(points), note, at())) },
+    )
+}
+
+private enum class SpendOn { MONEY, REWARD }
+
+/** SPEC FR-14, FR-55: spending is either money handed over or a reward from the family's shop. */
+@Composable
+private fun SpendDetail(
+    state: FamilyState, child: ChildId?, now: () -> InstantMs, formats: Formats, lastSyncNotice: String?,
+    refusal: Refusal?, submit: (Action) -> Unit,
+) {
+    val rewards = state.rewards.filter { !it.archived }
+    var on by rememberSaveable { mutableStateOf(SpendOn.MONEY) }
+    if (rewards.isNotEmpty()) Segmented(listOf(SpendOn.MONEY to "Money", SpendOn.REWARD to "A reward"), on, { on = it })
+    if (on == SpendOn.MONEY || rewards.isEmpty()) {
+        CashOutDetail(state, child, now, formats, lastSyncNotice, refusal, submit)
+    } else {
+        RewardDetail(state, child, rewards, now, formats, refusal, submit)
+    }
+}
+
+@Composable
+private fun RewardDetail(
+    state: FamilyState, child: ChildId?, rewards: List<RewardRecord>, now: () -> InstantMs, formats: Formats,
+    refusal: Refusal?, submit: (Action) -> Unit,
+) {
+    var picked by remember { mutableStateOf<RewardRecord?>(null) }
+    val available = child?.let { state.account(it)?.displayed } ?: Points.ZERO
+    Text("Available: ${formats.points(available)} points", style = Hp.type.body, color = Hp.colors.inkMuted)
+    Column {
+        rewards.forEach { reward ->
+            val isOn = reward.id == picked?.id
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(Radius.small)
+                    .background(if (isOn) Hp.colors.sunk else Hp.colors.surface)
+                    .selectable(isOn, role = Role.RadioButton) { picked = reward }
+                    .padding(horizontal = Space.s),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(HpIcons.of(reward.icon), contentDescription = null, tint = Hp.colors.ink, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(Space.m))
+                Text(reward.title, style = if (isOn) Hp.type.title.copy(fontSize = Hp.type.body.fontSize) else Hp.type.body, color = Hp.colors.ink, modifier = Modifier.weight(1f))
+                Text(formats.points(reward.price), style = Hp.type.figure, color = if (reward.price > available) Hp.colors.inkMuted else Hp.colors.ink)
+            }
+        }
+    }
+    RefusalText(refusal)
+    val reward = picked
+    OutcomeButton(
+        if (child == null || reward == null) "Choose a reward" else "Spend ${formats.points(reward.price)} on ${reward.title}",
+        enabled = child != null && reward != null,
+        onClick = { if (child != null && reward != null) submit(FamilyActions.redeem(state, child, reward, now())) },
     )
 }
 

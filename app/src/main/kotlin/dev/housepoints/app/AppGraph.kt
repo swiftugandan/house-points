@@ -10,6 +10,8 @@ import dev.housepoints.app.platform.PaydayReminder
 import dev.housepoints.app.sync.LinkFactory
 import dev.housepoints.app.sync.NearbyPeerLink
 import dev.housepoints.app.sync.SyncController
+import dev.housepoints.app.widget.BalancesWidget
+import androidx.glance.appwidget.updateAll
 import dev.housepoints.lan.LanLink
 import dev.housepoints.nearby.NearbyLink
 import dev.housepoints.contracts.FamilyId
@@ -82,6 +84,13 @@ class AppGraph(context: Context) {
             val ownName = repository.snapshot.map { phoneName() }.distinctUntilChanged()
             combine(foreground, key, ownName) { visible, held, _ -> if (visible) held as? KeyState.Held else null }
                 .collect { held -> if (held != null) startAutomatic(held) else sync.stop() }
+        }
+        scope.launch {
+            // SPEC FR-44: refresh the widget whenever a displayed balance or name changes.
+            repository.snapshot
+                .map { snapshot -> (snapshot as? FamilySnapshot.Ready)?.state?.let { s -> s.children.map { it.name to s.account(it.id)?.displayed } } }
+                .distinctUntilChanged()
+                .collect { BalancesWidget().updateAll(appContext) }
         }
         scope.launch {
             repository.snapshot
