@@ -40,6 +40,7 @@ import dev.housepoints.app.ui.components.PickTile
 import dev.housepoints.app.ui.components.QuietButton
 import dev.housepoints.app.ui.components.Rule
 import dev.housepoints.app.ui.components.Segmented
+import dev.housepoints.app.ui.components.TextAction
 import dev.housepoints.app.ui.components.TopBar
 import dev.housepoints.app.ui.onboarding.Field
 import dev.housepoints.app.ui.theme.Hp
@@ -62,7 +63,7 @@ enum class SettingsPage(val title: String, val detail: String, val icon: () -> I
 }
 
 @Composable
-fun SettingsScreen(familyName: String, onBack: () -> Unit, onOpen: (SettingsPage) -> Unit) {
+fun SettingsScreen(familyName: String, version: String, onBack: () -> Unit, onOpen: (SettingsPage) -> Unit, onCheckForUpdate: () -> Unit) {
     Column(Modifier.fillMaxSize().background(Hp.colors.ground)) {
         TopBar("Settings", onBack)
         Text(familyName, style = Hp.type.body, color = Hp.colors.inkMuted, modifier = Modifier.padding(horizontal = Space.l, vertical = Space.s))
@@ -83,10 +84,15 @@ fun SettingsScreen(familyName: String, onBack: () -> Unit, onOpen: (SettingsPage
                 }
                 Rule()
             }
-            Text(
-                "House Points uses the Bricolage Grotesque and Atkinson Hyperlegible typefaces under the SIL Open Font License.",
-                style = Hp.type.caption, color = Hp.colors.inkMuted, modifier = Modifier.navigationBarsPadding().padding(Space.l),
-            )
+            Column(Modifier.navigationBarsPadding().padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
+                Text("Version $version", style = Hp.type.label, color = Hp.colors.ink)
+                TextAction("Check for a newer version", onCheckForUpdate, inset = false)
+                Text(
+                    "Opens the releases page in your browser. House Points itself never goes online. " +
+                        "Free software under the MIT licence; the Bricolage Grotesque and Atkinson Hyperlegible typefaces are under the SIL Open Font License.",
+                    style = Hp.type.caption, color = Hp.colors.inkMuted,
+                )
+            }
         }
     }
 }
