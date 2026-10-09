@@ -9,7 +9,7 @@ An Android app that runs only on parents' phones and keeps a family "bank" for c
 ## Current phase
 
 Phase 6, implementation. State as of 2026-10-09 (0.2.0: SPEC Amendment 1, contracts 0.2.0 frozen):
-- `:contracts` is frozen at 0.1.0.
+- `:contracts` is frozen at 0.2.0 (Amendment 1, backward-compatible with 0.1.0 readers; see CrossVersionTest).
 - `:ledger`, `:sync` and `:data` are live-verified. `:ledger` was verified on the JVM against the spec examples; `:sync` and `:data` against the app on a TCL T1 Pro, through a desktop peer over `adb forward`.
 - `:lan` has been verified server-side over USB only. The test Wi-Fi had client isolation.
 - `:nearby` has been tested against mocks only. It needs two phones.
