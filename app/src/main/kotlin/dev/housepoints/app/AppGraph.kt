@@ -1,6 +1,8 @@
 package dev.housepoints.app
 
 import android.content.Context
+import android.content.res.Configuration
+import androidx.glance.appwidget.updateAll
 import dev.housepoints.app.family.Clock
 import dev.housepoints.app.family.FamilyKeys
 import dev.housepoints.app.family.FamilyRepository
@@ -11,16 +13,18 @@ import dev.housepoints.app.sync.LinkFactory
 import dev.housepoints.app.sync.NearbyPeerLink
 import dev.housepoints.app.sync.SyncController
 import dev.housepoints.app.widget.BalancesWidget
-import androidx.glance.appwidget.updateAll
-import dev.housepoints.lan.LanLink
-import dev.housepoints.nearby.NearbyLink
+import dev.housepoints.app.widget.WidgetModels
+import dev.housepoints.app.widget.WidgetPalette
 import dev.housepoints.contracts.FamilyId
 import dev.housepoints.data.DeviceIdentityStore
 import dev.housepoints.data.FamilyKeyVault
 import dev.housepoints.data.SqliteOpLog
 import dev.housepoints.data.SyncHistoryEntry
 import dev.housepoints.data.SyncHistoryStore
+import dev.housepoints.lan.LanLink
+import dev.housepoints.nearby.NearbyLink
 import dev.housepoints.sync.FamilyKey
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,6 +50,15 @@ sealed interface KeyState {
 class AppGraph(context: Context) {
     val appContext: Context = context.applicationContext
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    private val _night = MutableStateFlow(WidgetPalette.isNight(appContext.resources.configuration))
+
+    /** The system's dark mode, as state, so the widget recomposes when it flips (see WidgetPalette). */
+    val night: StateFlow<Boolean> = _night.asStateFlow()
+
+    fun onConfigurationChanged(configuration: Configuration) {
+        _night.value = WidgetPalette.isNight(configuration)
+    }
     val clock: Clock = Clock.SYSTEM
     val deviceId = DeviceIdentityStore(appContext).deviceId()
     val opLog = SqliteOpLog(appContext)
@@ -86,9 +99,8 @@ class AppGraph(context: Context) {
                 .collect { held -> if (held != null) startAutomatic(held) else sync.stop() }
         }
         scope.launch {
-            // SPEC FR-44: refresh the widget whenever a displayed balance or name changes.
-            repository.snapshot
-                .map { snapshot -> (snapshot as? FamilySnapshot.Ready)?.state?.let { s -> s.children.map { it.name to s.account(it.id)?.displayed } } }
+            // SPEC FR-44: re-render the widget whenever what it shows, or the theme it is drawn in, changes.
+            combine(repository.snapshot.map { WidgetModels.from(it, Locale.getDefault()) }, night) { model, dark -> model to dark }
                 .distinctUntilChanged()
                 .collect { BalancesWidget().updateAll(appContext) }
         }

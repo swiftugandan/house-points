@@ -219,7 +219,16 @@ The UI never calculates a balance itself.
 
 **Statements.** Produced by drawing to a `Bitmap` with `android.graphics` and handed to a `FileProvider` for sharing (FR-42).
 
-**Widget (FR-44, SHOULD).** Deferred to after v1 (see `PLAN.md`).
+**Locked savings (FR-47 to FR-53).** The ledger owns every lock calculation (`Locks`), and the app only formats it. `FamilyRepository.settle()` records payouts that are due on every start loop. Their IDs are deterministic, so two phones recording the same payout converge to a single entry. Weekly totals and statements split flows with `ledger.Flows`, which treats lock movements as transfers rather than earning or spending.
+
+**Widget (FR-44, since 0.2).** `widget/BalancesWidget` is a Glance `GlanceAppWidget`.
+- It reads through the same `FamilyRepository.refreshNow()` as the UI, so it never calculates a balance itself.
+- The model comes from `HomeModels`, so the widget's lines match Home's.
+- The content collects both the repository snapshot and `AppGraph.night` as state, so a live Glance session recomposes on any change.
+- `AppGraph` calls `updateAll` when the model or the theme changes, which restarts ended sessions.
+- Colours resolve together through `WidgetPalette`: adaptive on API 31+, and resolved once from `night` below that.
+- Taps carry a `WidgetLink` (Record, or a child's account) as explicit-intent data. `MainActivity` (`singleTop`) hands it to navigation.
+- It uses system type, because widgets can't load bundled fonts, and lists children in creation order.
 
 ---
 

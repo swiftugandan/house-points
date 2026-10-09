@@ -1,15 +1,18 @@
 package dev.housepoints.ledger
 
 import dev.housepoints.contracts.ChildId
+import dev.housepoints.contracts.DeviceId
 import dev.housepoints.contracts.EntryId
 import dev.housepoints.contracts.EntryIds
 import dev.housepoints.contracts.EntryKind
 import dev.housepoints.contracts.EntryRecorded
 import dev.housepoints.contracts.InstantMs
+import dev.housepoints.contracts.Lamport
 import dev.housepoints.contracts.LockTerms
 import dev.housepoints.contracts.Micropoints
 import dev.housepoints.contracts.Points
 import dev.housepoints.contracts.RateBp
+import java.util.UUID
 
 public enum class LockStatus { LOCKED, DUE, PAID, BROKEN }
 
@@ -87,13 +90,13 @@ public object Locks {
         val family = state.family ?: return null
         val terms = termsNow(state, weeks)
         val line = LedgerLine(
-            EntryRecorded(EntryId(java.util.UUID(0, 0)), child, EntryKind.ADJUSTMENT, -principal, state.asOf, "", lock = terms),
-            -principal, dev.housepoints.contracts.DeviceId(java.util.UUID(0, 0)), dev.housepoints.contracts.Lamport.ZERO, null,
+            EntryRecorded(EntryId(UUID(0, 0)), child, EntryKind.ADJUSTMENT, -principal, state.asOf, "", lock = terms),
+            -principal, DeviceId(UUID(0, 0)), Lamport.ZERO, null,
         )
         return lockOf(line, Periods(family.zone, family.weekStart), emptyList(), payoutRecorded = false, asOf = state.asOf)
     }
 
-        /** SPEC FR-52: returns (payout or early break) still in force whose lock has been reversed. */
+    /** SPEC FR-52: returns (payout or early break) still in force whose lock has been reversed. */
     internal fun orphanedReturns(accounts: Map<ChildId, Account>): List<Flag.OrphanedLockReturn> =
         accounts.flatMap { (child, account) ->
             val reversedLocks = account.lines.filter { it.entry.lock != null && it.reversedBy != null }.map { it.entry.entryId }.toSet()

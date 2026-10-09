@@ -9,6 +9,7 @@ import dev.housepoints.ledger.Chores
 import dev.housepoints.ledger.DueChore
 import dev.housepoints.ledger.FamilyState
 import dev.housepoints.ledger.Flag
+import dev.housepoints.ledger.Flows
 import dev.housepoints.ledger.LockStatus
 import dev.housepoints.ledger.Locks
 import java.time.LocalDate
@@ -44,7 +45,7 @@ object HomeModels {
         val overdrawn = state.flags.filterIsInstance<Flag.Overdrawn>().map { it.child }.toSet()
         val children = state.children.filter { !it.archived }.map { child ->
             val account = state.account(child.id)
-            val earned = account?.current?.credits ?: Points.ZERO
+            val earned = account?.current?.let { Flows.of(account, it.start, state.asOf).earned } ?: Points.ZERO
             val due = Chores.dueFor(state, child.id, today)
             HomeChild(
                 id = child.id,

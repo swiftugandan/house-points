@@ -1,6 +1,7 @@
 package dev.housepoints.app
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -22,12 +23,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.housepoints.app.family.FamilySnapshot
 import dev.housepoints.app.family.FamilyViewModel
 import dev.housepoints.app.ui.AppNavigation
-import dev.housepoints.app.ui.theme.Hp
 import dev.housepoints.app.ui.theme.HousePointsTheme
+import dev.housepoints.app.ui.theme.Hp
+import dev.housepoints.app.widget.WidgetLink
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
+    /** A widget tap waiting to be acted on; cleared once navigation has handled it. */
+    private val link = MutableStateFlow<WidgetLink?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) link.value = WidgetLink.parse(intent?.dataString)
         enableEdgeToEdge()
         val graph = (application as HousePointsApp).graph
         val factory = object : ViewModelProvider.Factory {
@@ -38,12 +45,19 @@ class MainActivity : ComponentActivity() {
             HousePointsTheme {
                 val family: FamilyViewModel = viewModel(factory = factory)
                 val snapshot by family.snapshot.collectAsState()
+                val pending by link.collectAsState()
                 NotificationPermission(snapshot)
                 Box(Modifier.fillMaxSize().background(Hp.colors.ground)) {
-                    AppNavigation(graph, family, snapshot)
+                    AppNavigation(graph, family, snapshot, pending) { link.value = null }
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        link.value = WidgetLink.parse(intent.dataString)
     }
 
     override fun onStart() {

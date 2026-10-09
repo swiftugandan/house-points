@@ -196,7 +196,13 @@ Motion is restrained and serves a purpose. Every animation respects the system "
 
 - **Locks** use the brass interest colour and the lock icon, because a lock is interest-in-waiting. Wherever a balance appears, its locked amount sits beside it (SPEC FR-53): a lock row on the account ("Locked away: 500 · Back Mon 16 Nov with about 41 more"), "· 500 locked" on Home, and a line in the child view.
 - **Rewards** live under the Record sheet's **Spend** tab (Money / A reward), so spending stays one decision.
-- **The widget** uses the colour tokens but system type: Android widgets can't load bundled fonts. It lists children in the order they were added and never ranks them.
+- **The widget** is a passbook page on the home screen. It's titled "House Points", not the family name, because a phone holds one family.
+  - **Header:** the brass payday line, and the one action, a green Record disc.
+  - **Rows:** ruled, one per child. Each has a disc in the child's colour with their initial. The name and the balance figure share a line, and Home's week line runs beneath both, like an entry's note.
+  - **Order:** the order children were added, never ranked.
+  - **Narrow sizes:** a single strip of discs and balances.
+  - **Type and shapes:** system type with the colour tokens, because widgets can't load bundled fonts. Shapes are drawables, because Glance can't round corners below Android 12.
+  - **Dark mode:** follows the system, and the widget is never half light and half dark.
 
 ## Large text
 

@@ -176,4 +176,20 @@ class LockedSavingsTest {
         log.redeem(tom, reward, 50, "Screen time, 30 minutes", "2026-10-14T10:00")
         assertEquals(Points(70), Projection.project(log.ops(), london("2026-10-14T11:00")).account(tom)!!.displayed)
     }
+
+    @Test
+    fun `lock movements are transfers to and from locked savings, never earning or spending`() {
+        val ex = L1()
+        ex.log.add(Locks.duePayouts(ex.state("2026-11-16T09:00")).single())
+        val state = ex.state("2026-11-20T09:00")
+        val account = state.account(ex.ada)!!
+        val lockWeek = account.periods.single { it.startDate == LocalDate.of(2026, 10, 12) }
+        assertEquals(Flows(earned = Points.ZERO, spent = Points.ZERO, locked = Points(-500)), Flows.of(account, lockWeek.start, lockWeek.end))
+        val current = account.current!!
+        assertEquals(Flows(earned = Points.ZERO, spent = Points.ZERO, locked = Points(541)), Flows.of(account, current.start, state.asOf))
+        account.periods.forEach { week ->
+            val flows = Flows.of(account, week.start, week.end)
+            assertEquals(week.credits + week.debits, flows.earned + flows.spent + flows.locked)
+        }
+    }
 }
