@@ -100,7 +100,7 @@ class SpecExamplesTest {
         assertEquals(micro("2.02"), weeks.getValue(LocalDate.of(2026, 10, 19)).interest)
         assertEquals(RateBp(200), weeks.getValue(LocalDate.of(2026, 10, 26)).rate)
         assertEquals(micro("4.0804"), weeks.getValue(LocalDate.of(2026, 10, 26)).interest)
-        assertEquals(micro("208.1006"), weeks.getValue(LocalDate.of(2026, 10, 26)).closing)
+        assertEquals(micro("208.1004"), weeks.getValue(LocalDate.of(2026, 10, 26)).closing)
     }
 
     @Test

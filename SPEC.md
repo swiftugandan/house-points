@@ -245,7 +245,7 @@ This starts from Example 1. Award E (+100, Wed 7 Oct 18:00) was a mistake. While
 
 This starts from Example 1. On Tue 20 Oct, a parent sets the interest rate to 200 bp, effective Wed 21 Oct 00:00 (during W3).
 - W3 uses the policy in force at its start, Mon 19 Oct: 100 bp. Interest 2.02, close 204.02.
-- W4 uses the policy in force at Mon 26 Oct: 200 bp. Interest is 204.02 × 2% = 4.0804, close **208.1006** (shown as 208).
+- W4 uses the policy in force at Mon 26 Oct: 200 bp. Interest is 204.02 × 2% = 4.0804, close **208.1004** (shown as 208).
 
 ### Example 5: both parents pay out the same savings
 
