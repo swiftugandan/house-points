@@ -81,6 +81,14 @@ class LockedSavingsTest {
     }
 
     @Test
+    fun `a reversed payout is never offered again, so recording cannot loop`() {
+        val ex = L1()
+        ex.log.add(Locks.duePayouts(ex.state("2026-11-16T09:00")).single())
+        ex.log.reverse(EntryIds.lockPayout(ex.lockId), ex.ada, 541, london("2026-11-16T00:00"), ex.log.phoneA)
+        assertEquals(emptyList<EntryRecorded>(), Locks.duePayouts(ex.state("2026-11-17T09:00")))
+    }
+
+    @Test
     fun `nothing is due before maturity`() {
         val ex = L1()
         assertEquals(emptyList<EntryRecorded>(), Locks.duePayouts(ex.state("2026-11-15T23:59")))

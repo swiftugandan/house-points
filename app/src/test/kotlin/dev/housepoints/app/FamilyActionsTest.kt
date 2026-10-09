@@ -98,11 +98,11 @@ class FamilyActionsTest {
         val ada = setUp()
         record(FamilyActions.award(setOf(ada), null, Points(40), "Brave at the dentist", at("2026-10-05T10:00")))
         val line = state("2026-10-06T10:00").account(ada)!!.lines.single()
-        record(FamilyActions.reverse(line, "Meant for Tom"))
+        record(FamilyActions.reverse(state("2026-10-06T10:00"), line, "Meant for Tom"))
         val after = state("2026-10-06T10:00").account(ada)!!
         assertEquals(Points(0), after.displayed)
         val reversed = after.lines.first { it.entry.kind == EntryKind.AWARD }
-        assertEquals(Action.Refused(Refusal.AlreadyReversed), FamilyActions.reverse(reversed, "again"))
+        assertEquals(Action.Refused(Refusal.AlreadyReversed), FamilyActions.reverse(state("2026-10-06T10:00"), reversed, "again"))
         assertTrue(after.lines.any { it.entry.kind == EntryKind.REVERSAL && it.entry.effectiveAt == line.entry.effectiveAt })
     }
 
