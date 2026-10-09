@@ -61,7 +61,6 @@ class WidgetModelTest {
         record(FamilyActions.award(setOf(ada), null, Points(1250), "Saved up", at("2026-10-09T09:00")))
         val model = WidgetModels.from(FamilySnapshot.Ready(FAMILY, state()), Locale.UK)
         val home = HomeModels.from(state(), LocalDate.of(2026, 10, 9), Formats(Locale.UK, zone), Locale.UK)
-        assertEquals("The Okellos", model.title)
         assertEquals(home.paydayLine, model.paydayLine)
         assertEquals(
             listOf(
@@ -74,7 +73,7 @@ class WidgetModelTest {
 
     @Test
     fun `before a family exists the widget says how to start`() {
-        assertEquals(WidgetModel("House Points", null, emptyList()), WidgetModels.from(FamilySnapshot.NoFamily, Locale.UK))
+        assertEquals(WidgetModel(null, emptyList()), WidgetModels.from(FamilySnapshot.NoFamily, Locale.UK))
     }
 
     @Test
