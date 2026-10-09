@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -87,15 +88,18 @@ fun QuietButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifie
     }
 }
 
-/** A text-only action in the action colour, e.g. "Sync" on the sync line. */
+/**
+ * A text-only action in the action colour, e.g. "Sync" on the sync line. [inset] false aligns the label with
+ * text above it (the touch target stays 48 dp tall).
+ */
 @Composable
-fun TextAction(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun TextAction(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, inset: Boolean = true) {
     Box(
         modifier = modifier
             .heightIn(min = Space.touch)
             .clip(Radius.small)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = Space.s),
+            .padding(horizontal = if (inset) Space.s else 0.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(label, style = Hp.type.label.copy(fontSize = Hp.type.body.fontSize), color = Hp.colors.action)
@@ -169,10 +173,31 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier, trailing: String? 
     }
 }
 
-/** DESIGN.md segmented control: a sunk well with the selected segment raised to the surface. */
+/**
+ * DESIGN.md segmented control: a sunk well with the selected segment raised to the surface. With large
+ * system text (NFR-A11Y-2) the segments stack into a full-width list rather than clip their labels.
+ */
 @Composable
 fun <T> Segmented(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {
     val colors = Hp.colors
+    if (LocalDensity.current.fontScale >= LARGE_TEXT_SCALE) {
+        Column(
+            modifier.fillMaxWidth().clip(Radius.small).background(colors.sunk).padding(Space.xs).selectableGroup(),
+            verticalArrangement = Arrangement.spacedBy(Space.xs),
+        ) {
+            options.forEach { (value, label) ->
+                val isSelected = value == selected
+                Box(
+                    Modifier.fillMaxWidth().heightIn(min = Space.touch).clip(Radius.small)
+                        .background(if (isSelected) colors.surface else Color.Transparent)
+                        .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(value) })
+                        .padding(horizontal = Space.m),
+                    contentAlignment = Alignment.CenterStart,
+                ) { Text(label, style = Hp.type.label, color = colors.ink) }
+            }
+        }
+        return
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -265,3 +290,6 @@ fun PickTile(icon: ImageVector, label: String, selected: Boolean, onClick: () ->
         }
     }
 }
+
+/** Above this system font scale, horizontal segments no longer fit their labels on a phone. */
+private const val LARGE_TEXT_SCALE = 1.5f

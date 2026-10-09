@@ -89,7 +89,7 @@ fun HomeScreen(
                     Column(Modifier.fillMaxWidth().background(colors.surface).padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
                         Text("No children yet", style = Hp.type.title, color = colors.ink)
                         Text("Add each child once. Points, interest and history start from their first entry.", style = Hp.type.body, color = colors.inkMuted)
-                        TextAction("Add a child", onAddChild)
+                        TextAction("Add a child", onAddChild, inset = false)
                     }
                     Rule()
                 }
@@ -151,7 +151,7 @@ private fun ChildRow(child: HomeChild, onChild: (ChildId) -> Unit, onRecordDue: 
         }
         if (child.due.isNotEmpty()) {
             Row(Modifier.padding(start = 60.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.s)) {
-                Text("Due", style = Hp.type.label, color = colors.inkMuted, modifier = Modifier.width(36.dp))
+                Text("Due", style = Hp.type.label, color = colors.inkMuted)
                 child.due.forEach { due ->
                     CircleIconButton(HpIcons.of(due.icon), due.description, onClick = { onRecordDue(child.id, due.due) })
                 }

@@ -1,6 +1,8 @@
 package dev.housepoints.app.ui.account
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,9 +102,9 @@ fun AccountScreen(
                             }
                             ProgressBar(goal.fraction, colors.child(model.colorIndex).fill, "Goal progress ${goal.progress}")
                         }
-                        TextAction("Change goal", onGoal)
+                        TextAction("Change goal", onGoal, inset = false)
                     } else {
-                        TextAction("Set a savings goal", onGoal)
+                        TextAction("Set a savings goal", onGoal, inset = false)
                     }
                     Text(model.paydayLine, style = Hp.type.caption, color = colors.interest)
                 }
@@ -123,7 +125,7 @@ fun AccountScreen(
                         Icon(HpIcons.of(expected.chore.icon), contentDescription = null, tint = colors.ink, modifier = Modifier.size(24.dp))
                         Spacer(Modifier.width(Space.m))
                         Text(expected.chore.title, style = Hp.type.body, color = colors.ink, modifier = Modifier.weight(1f))
-                        if (expected.done) DoneBadge(size = 26.dp) else Box(Modifier.size(26.dp).clip(Radius.medium).background(colors.sunk))
+                        if (expected.done) DoneBadge(size = 26.dp) else Box(Modifier.size(26.dp).border(2.dp, colors.inkMuted, CircleShape))
                     }
                     Rule()
                 }
