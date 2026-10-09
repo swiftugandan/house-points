@@ -263,11 +263,6 @@ internal class InterestEngine(
             if (byLamport != 0) byLamport else Uuids.compare(b.recordedBy.uuid, a.recordedBy.uuid)
         }
 
-        /** SPEC FR-25: `floor(clamp(base, 0, cap) × rate / 10 000)`; nothing below zero, never charged. */
-        fun interestOn(base: Micropoints, rate: RateBp, cap: Points?): Micropoints {
-            if (base.value <= 0L) return Micropoints.ZERO
-            val capped = cap?.let { minOf(base.value, it.toMicropoints().value) } ?: base.value
-            return Micropoints(Math.multiplyExact(capped, rate.value.toLong()) / RateBp.PER_UNIT)
-        }
+        fun interestOn(base: Micropoints, rate: RateBp, cap: Points?): Micropoints = Interest.on(base, rate, cap)
     }
 }

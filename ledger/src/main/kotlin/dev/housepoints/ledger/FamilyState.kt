@@ -124,7 +124,15 @@ public data class PeriodSummary(
     val cap: Points?,
     val interest: Micropoints,
     val closing: Micropoints,
-)
+) {
+    /** The amount that earned interest: the lowest balance, floored at zero and capped (SPEC FR-25). */
+    val base: Micropoints
+        get() {
+            val floored = maxOf(Micropoints.ZERO, lowest)
+            val capped = cap?.toMicropoints()
+            return if (capped != null && floored > capped) capped else floored
+        }
+}
 
 /** The week in progress at [FamilyState.asOf]. Its interest is not paid yet (SPEC FR-28). */
 public data class CurrentPeriod(
