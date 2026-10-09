@@ -21,7 +21,11 @@ public class DeviceIdentityStore(context: Context) {
 
     private fun read(): DeviceId? {
         if (!file.exists()) return null
-        return runCatching { DeviceId(UUID.fromString(file.readText(Charsets.US_ASCII).trim())) }.getOrNull()
+        return try {
+            DeviceId(UUID.fromString(file.readText(Charsets.US_ASCII).trim()))
+        } catch (e: IllegalArgumentException) {
+            null
+        }
     }
 
     private companion object {
