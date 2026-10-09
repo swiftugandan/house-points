@@ -13,8 +13,8 @@ android {
         applicationId = "dev.housepoints"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.2.1"
     }
 
     // Release signing comes from Gradle properties kept outside the repository (e.g. ~/.gradle/gradle.properties):
