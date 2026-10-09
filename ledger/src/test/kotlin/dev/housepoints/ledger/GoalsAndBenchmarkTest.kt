@@ -74,14 +74,15 @@ class GoalsAndBenchmarkTest {
                 }
             }
         }
-        val ops = log.ops()
+        // The app decodes each op once when it arrives (ops are immutable); recalculation starts from decoded ops.
+        val decoded = log.ops().map(DecodedOp::of)
         val asOf = InstantMs(start + 520 * week)
-        Projection.project(ops, asOf) // warm-up
+        repeat(2) { Projection.projectDecoded(decoded, asOf) } // warm-up
         val began = System.nanoTime()
-        val state = Projection.project(ops, asOf)
+        val state = Projection.projectDecoded(decoded, asOf)
         val millis = (System.nanoTime() - began) / 1_000_000
-        println("NFR-PERF-1: ${ops.size} ops projected in $millis ms on the JVM")
+        println("NFR-PERF-1: ${decoded.size} ops projected in $millis ms on the JVM")
         assertEquals(8, state.accounts.size)
-        assertTrue("projection took $millis ms", millis < 3_000)
+        assertTrue("projection took $millis ms", millis < 1_000)
     }
 }

@@ -23,7 +23,17 @@ public class Periods(private val zone: ZoneId, private val weekStart: DayOfWeek)
 
     public fun startDateOf(day: LocalDate): LocalDate = day.with(TemporalAdjusters.previousOrSame(weekStart))
 
-    public fun localDate(instant: InstantMs): LocalDate = Instant.ofEpochMilli(instant.value).atZone(zone).toLocalDate()
+    public fun localDate(instant: InstantMs): LocalDate {
+        val offsetSeconds = rules.getOffset(Instant.ofEpochMilli(instant.value)).totalSeconds
+        return LocalDate.ofEpochDay(Math.floorDiv(instant.value + offsetSeconds * MILLIS_PER_SECOND, MILLIS_PER_DAY))
+    }
+
+    private val rules = zone.rules
+
+    private companion object {
+        const val MILLIS_PER_SECOND = 1_000L
+        const val MILLIS_PER_DAY = 86_400_000L
+    }
 
     private fun startingOn(startDate: LocalDate): Period =
         Period(startDate, midnight(startDate), midnight(startDate.plusWeeks(1)))

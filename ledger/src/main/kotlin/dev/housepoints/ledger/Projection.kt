@@ -20,6 +20,7 @@ import dev.housepoints.contracts.InstantMs
 import dev.housepoints.contracts.MalformedPayload
 import dev.housepoints.contracts.Op
 import dev.housepoints.contracts.OpCodec
+import dev.housepoints.contracts.Payload
 import dev.housepoints.contracts.Points
 import dev.housepoints.contracts.Policy
 import dev.housepoints.contracts.PolicySet
@@ -30,11 +31,21 @@ import dev.housepoints.contracts.Uuids
 import dev.housepoints.contracts.ValueId
 import dev.housepoints.contracts.ValueUpsert
 
+/** An op with its payload decoded once; ops are immutable, so callers can keep these across projections. */
+public data class DecodedOp(val op: Op, val payload: Payload) {
+    public companion object {
+        public fun of(op: Op): DecodedOp = DecodedOp(op, OpCodec.decodePayload(op))
+    }
+}
+
 /** `(ops, asOf) → FamilyState` (SAD §3.2). Pure: no clock, no I/O, no floating point. */
 public object Projection {
     private val DEFAULT_ICON = IconKey("star")
 
-    public fun project(ops: Collection<Op>, asOf: InstantMs): FamilyState {
+    public fun project(ops: Collection<Op>, asOf: InstantMs): FamilyState = projectDecoded(ops.map(DecodedOp::of), asOf)
+
+    /** As [project], for callers that keep decoded ops (decoding is the most expensive step). */
+    public fun projectDecoded(ops: Collection<DecodedOp>, asOf: InstantMs): FamilyState {
         val folded = Fold()
         canonicalOrder(ops).forEach(folded::apply)
         val family = folded.family
@@ -64,12 +75,11 @@ public object Projection {
     }
 
     /** Duplicates removed and a single total order fixed, so input order and repetition cannot matter. */
-    private fun canonicalOrder(ops: Collection<Op>): List<Op> =
-        ops.sortedWith(
-            Op.CAUSAL_ORDER
-                .thenComparator { a, b -> Uuids.compare(a.opId.uuid, b.opId.uuid) }
-                .thenBy { it.body },
-        ).distinctBy { it.opId }
+    private val ORDER: Comparator<DecodedOp> = Comparator<DecodedOp> { a, b -> Op.CAUSAL_ORDER.compare(a.op, b.op) }
+        .thenComparator { a, b -> Uuids.compare(a.op.opId.uuid, b.op.opId.uuid) }
+        .thenBy { it.op.body }
+
+    private fun canonicalOrder(ops: Collection<DecodedOp>): List<DecodedOp> = ops.sortedWith(ORDER).distinctBy { it.op.opId }
 
     /** Mutable accumulator used only inside [project]; never escapes. */
     private class Fold {
@@ -91,10 +101,11 @@ public object Projection {
         private val penalty = mutableListOf<Pair<PolicyChange<Policy.Penalty>, OpKey>>()
         private val minCashOut = mutableListOf<Pair<PolicyChange<Policy.MinCashOut>, OpKey>>()
 
-        fun apply(op: Op) {
+        fun apply(decoded: DecodedOp) {
+            val op = decoded.op
             val key = OpKey.of(op)
             seen(op.originDevice, key)
-            when (val payload = OpCodec.decodePayload(op)) {
+            when (val payload = decoded.payload) {
                 is FamilyCreated -> if (family == null) {
                     family = FamilySettings(op.familyId, payload.name, payload.currency, payload.zone, payload.weekStart)
                 }

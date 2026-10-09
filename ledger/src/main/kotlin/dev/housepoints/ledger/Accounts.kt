@@ -8,6 +8,7 @@ import dev.housepoints.contracts.InstantMs
 import dev.housepoints.contracts.Micropoints
 import dev.housepoints.contracts.Points
 import dev.housepoints.contracts.RateBp
+import dev.housepoints.contracts.Uuids
 import java.util.TreeMap
 
 internal data class AccountsResult(val accounts: Map<ChildId, Account>, val flags: List<Flag>) {
@@ -53,6 +54,7 @@ internal object Accounts {
             it.entry.kind != EntryKind.REVERSAL && it.reversedBy == null && it.effect != Points.ZERO &&
                 it.entry.entryId.uuid.version() == UUID_VERSION_RANDOM_TIME_ORDERED
         }
+        if (candidates.distinctBy { it.recordedBy }.size < 2) return emptyList()
         return candidates
             .groupBy { Triple(it.entry.kind, it.entry.points, periods.localDate(it.entry.effectiveAt)) }
             .values
@@ -76,6 +78,12 @@ internal object Accounts {
 internal class Effects(private val byId: Map<EntryId, CanonicalEntry>) {
     private data class Resolution(val effect: Points, val at: InstantMs, val valid: Boolean)
 
+    /** Target id → its reversal, for reversals whose id is the deterministic one (SPEC FR-18). */
+    private val reversalOf: Map<EntryId, EntryId> = byId.values
+        .mapNotNull { c -> c.entry.reverses?.let { target -> target to c.entry.entryId } }
+        .filter { (target, reversal) -> reversal == EntryIds.reversal(target) }
+        .toMap()
+
     private val resolved = HashMap<EntryId, Resolution>()
     val problems = mutableListOf<Flag.MalformedEntry>()
 
@@ -93,9 +101,8 @@ internal class Effects(private val byId: Map<EntryId, CanonicalEntry>) {
     /** The valid reversal of [id] that is not itself reversed, if any. */
     fun reversalInForce(id: EntryId, depth: Int): EntryId? {
         if (depth > MAX_CHAIN) return null
-        val reversalId = EntryIds.reversal(id)
-        val reversal = byId[reversalId] ?: return null
-        if (reversal.entry.reverses != id || !resolve(reversalId, depth + 1).valid) return null
+        val reversalId = reversalOf[id] ?: return null
+        if (!resolve(reversalId, depth + 1).valid) return null
         return if (reversalInForce(reversalId, depth + 1) == null) reversalId else null
     }
 
@@ -168,9 +175,7 @@ internal class InterestEngine(
             }
         }
         val currentPeriod = inProgress(current, balance, changes)
-        val ordered = lines.sortedWith(
-            compareByDescending<LedgerLine> { it.entry.effectiveAt }.thenByDescending { OpKey(it.lamport, it.recordedBy) },
-        )
+        val ordered = lines.sortedWith(NEWEST_FIRST)
         return Account(child, balanceAt(currentPeriod, changes), ordered, summaries.asReversed().toList(), currentPeriod)
     }
 
@@ -251,6 +256,13 @@ internal class InterestEngine(
         if (from >= to) 0L else map.subMap(from, to).values.fold(0L, Math::addExact)
 
     companion object {
+        private val NEWEST_FIRST: Comparator<LedgerLine> = Comparator { a, b ->
+            val byInstant = b.entry.effectiveAt.compareTo(a.entry.effectiveAt)
+            if (byInstant != 0) return@Comparator byInstant
+            val byLamport = b.lamport.compareTo(a.lamport)
+            if (byLamport != 0) byLamport else Uuids.compare(b.recordedBy.uuid, a.recordedBy.uuid)
+        }
+
         /** SPEC FR-25: `floor(clamp(base, 0, cap) × rate / 10 000)`; nothing below zero, never charged. */
         fun interestOn(base: Micropoints, rate: RateBp, cap: Points?): Micropoints {
             if (base.value <= 0L) return Micropoints.ZERO
