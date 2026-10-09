@@ -19,6 +19,15 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
     }
 
+    testOptions {
+        unitTests.all { test ->
+            // Live desktop-peer test (LiveDesktopPeerTest): -Php.peer=host:port -Php.pairing=hp1:…
+            listOf("hp.peer", "hp.pairing").forEach { name ->
+                providers.gradleProperty(name).orNull?.let { test.systemProperty(name, it) }
+            }
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
