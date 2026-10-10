@@ -45,8 +45,10 @@ public data class SyncHistoryEntry(
  * The most recent [CAPACITY] sync attempts, newest first, kept in a small JSON file in `filesDir`.
  * Nothing in it ever leaves the device unless the parent's backup includes app files.
  */
-public class SyncHistoryStore(context: Context) {
-    private val file = File(context.filesDir, FILE_NAME)
+public class SyncHistoryStore(directory: File) {
+    public constructor(context: Context) : this(context.filesDir)
+
+    private val file = File(directory, FILE_NAME)
     private val serializer = ListSerializer(SyncHistoryEntry.serializer())
 
     public suspend fun add(entry: SyncHistoryEntry): Unit = lock.withLock {
