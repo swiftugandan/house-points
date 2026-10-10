@@ -159,7 +159,7 @@ class SyncController(
 
     private suspend fun acceptLoop(opened: PeerLink, family: FamilyId, key: FamilyKey, manual: Boolean) {
         while (true) {
-            val transport = opened.awaitIncoming()
+            val transport = opened.awaitIncoming() ?: return
             scope.launch { run(transport, "the other phone", family, key, manual) }
         }
     }
@@ -179,8 +179,7 @@ class SyncController(
         val name = (outcome as? SyncOutcome.Completed)?.peer?.let { peer -> after?.devices?.firstOrNull { it.id == peer }?.name?.ifBlank { null } } ?: peerName
         if (manual) {
             _state.value = SyncState.Finished(name, outcome, arrived.size, recalculated)
-            link?.stop()
-            jobs.forEach { it.cancel() }
+            stop()
         }
         // Give the other phone a moment to finish its side before the next automatic pass.
         if (!manual) delay(SETTLE_MS)

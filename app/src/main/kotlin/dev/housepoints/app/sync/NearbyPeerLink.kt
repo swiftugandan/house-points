@@ -15,7 +15,7 @@ class NearbyPeerLink(private val nearby: NearbyLink) : PeerLink {
 
     override suspend fun connect(peer: LinkPeer): Transport = nearby.connect(Peer(peer.address, peer.device, peer.name))
 
-    override suspend fun awaitIncoming(): Transport = nearby.awaitIncoming()
+    override suspend fun awaitIncoming(): Transport? = nearby.awaitIncoming()
 
     override fun stop() = nearby.stop()
 }

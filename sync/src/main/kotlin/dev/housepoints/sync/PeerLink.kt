@@ -18,9 +18,9 @@ public interface PeerLink {
     /** Opens a transport to [peer]; throws [java.io.IOException] when it cannot. */
     public suspend fun connect(peer: LinkPeer): Transport
 
-    /** The next transport a peer opened to this phone. */
-    public suspend fun awaitIncoming(): Transport
+    /** The next transport a peer opened to this phone; null once [stop] has been called. */
+    public suspend fun awaitIncoming(): Transport?
 
-    /** Stops discovery and closes every open transport. */
+    /** Stops discovery and closes every open transport; anyone waiting in [awaitIncoming] gets null. */
     public fun stop()
 }

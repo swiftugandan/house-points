@@ -69,7 +69,7 @@ class SyncControllerTest {
         assertEquals(emptyList<Throwable>(), uncaught.toList())
     }
 
-    /** The other phone is visible and dials this one (its id sorts lower); stopping closes the incoming queue, as LanLink does. */
+    /** The other phone is visible and dials this one (its id sorts lower); stopping closes the incoming queue, as LanLink does (PeerLink: null after stop). */
     private class AcceptingLink(private val peer: LinkPeer) : PeerLink {
         val incoming = Channel<Transport>(Channel.UNLIMITED)
 
@@ -80,7 +80,7 @@ class SyncControllerTest {
 
         override suspend fun connect(peer: LinkPeer): Transport = error("this phone only accepts")
 
-        override suspend fun awaitIncoming(): Transport = incoming.receive()
+        override suspend fun awaitIncoming(): Transport? = incoming.receiveCatching().getOrNull()
 
         override fun stop() {
             incoming.close()

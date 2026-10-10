@@ -83,7 +83,7 @@ public class LanLink(context: Context, family: FamilyId, private val self: Devic
         SocketTransport(socket)
     }
 
-    override suspend fun awaitIncoming(): Transport = incoming.receive()
+    override suspend fun awaitIncoming(): Transport? = incoming.receiveCatching().getOrNull()
 
     override fun stop() {
         server?.close()

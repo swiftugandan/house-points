@@ -96,10 +96,10 @@ public class NearbyLink(context: Context, familyId: FamilyId, private val self: 
             ?: throw NearbyException("no connection with ${peer.name} within ${CONNECT_TIMEOUT_MS / MILLIS_PER_SECOND} s", null)
     }
 
-    /** The next connection a peer opened that nobody was waiting for in [connect]. */
-    public suspend fun awaitIncoming(): Transport = incoming.receive()
+    /** The next connection a peer opened that nobody was waiting for in [connect]; null once [stop] has been called. */
+    public suspend fun awaitIncoming(): Transport? = incoming.receiveCatching().getOrNull()
 
-    /** Stops advertising and discovery and drops every connection. */
+    /** Stops advertising and discovery and drops every connection; a link is not reused after this. */
     public fun stop() {
         client.stopAdvertising()
         client.stopDiscovery()
@@ -108,6 +108,7 @@ public class NearbyLink(context: Context, familyId: FamilyId, private val self: 
         connections.clear()
         awaitingConnection.values.forEach { it.completeExceptionally(NearbyException("link stopped", null)) }
         awaitingConnection.clear()
+        incoming.close()
     }
 
     private inner class Connection(val endpointId: String) {
