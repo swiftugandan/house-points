@@ -16,9 +16,9 @@ Any number of parents' phones can join one family. While the app is open on phon
 
 There are three kinds of chores.
 
-- **Expected jobs** are things everyone in the family does because they live there: making your bed, clearing your plate. These earn no points. Keeping them separate stops every request turning into "what do I get for it?" The app can show them as a simple tick list.
+- **Expected activities** are things everyone in the family does because they live there: making your bed, clearing your plate. These earn no points. Keeping them separate stops every request turning into "what do I get for it?" The app can show them as a simple tick list.
 - **Paid chores** have a fixed points value and belong to a particular child. They can repeat (daily, on certain weekdays, or weekly) or happen once.
-- **Bounty jobs** are extra jobs any child can do, such as washing the car. Each completion is paid.
+- **Bounty activities** are extra activities any child can do, such as washing the car. Each completion is paid.
 
 **Behaviour awards** are points a parent gives when they notice something worth noticing. Each award is linked to one of the family's values (kindness, honesty, effort, courage, or whatever your family chooses) and carries a short note saying what happened. Over time a child's history becomes a record of who they are, not just what they did.
 

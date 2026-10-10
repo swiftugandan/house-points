@@ -61,14 +61,14 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun JobsSettings(state: FamilyState, formats: Formats, locale: Locale, onBack: () -> Unit, onEdit: (ChoreId?) -> Unit) {
+fun ActivitiesSettings(state: FamilyState, formats: Formats, locale: Locale, onBack: () -> Unit, onEdit: (ChoreId?) -> Unit) {
     val groups = listOf(
         ChoreKind.EXPECTED to "Unpaid, everyone does them",
-        ChoreKind.ASSIGNED to "Paid jobs",
-        ChoreKind.BOUNTY to "Bounty jobs, anyone can do them",
+        ChoreKind.ASSIGNED to "Paid activities",
+        ChoreKind.BOUNTY to "Bounty activities, anyone can do them",
     )
     Column(Modifier.fillMaxSize().background(Hp.colors.ground)) {
-        TopBar("Jobs", onBack)
+        TopBar("Activities", onBack)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             groups.forEach { (kind, label) ->
                 val chores = state.chores.filter { it.kind == kind && !it.archived }
@@ -96,7 +96,7 @@ fun JobsSettings(state: FamilyState, formats: Formats, locale: Locale, onBack: (
             }
             Spacer(Modifier.size(Space.xl))
         }
-        OutcomeButton("Add a job", { onEdit(null) }, icon = HpIcons.Plus, modifier = Modifier.navigationBarsPadding().padding(Space.l))
+        OutcomeButton("Add an activity", { onEdit(null) }, icon = HpIcons.Plus, modifier = Modifier.navigationBarsPadding().padding(Space.l))
     }
 }
 
@@ -113,7 +113,7 @@ private fun describe(chore: ChoreRecord, state: FamilyState, locale: Locale): St
 
 private enum class Often(val label: String) { DAILY("Every day"), SOME_DAYS("Some days"), WEEKLY("Weekly"), ONCE("Once") }
 
-/** Add or edit a job (SPEC FR-6). Edits never change entries already recorded (SPEC FR-11). */
+/** Add or edit an activity (SPEC FR-6). Edits never change entries already recorded (SPEC FR-11). */
 @Composable
 fun ChoreEditor(state: FamilyState, chore: ChoreRecord?, formats: Formats, locale: Locale, onBack: () -> Unit, perform: (Action) -> Unit) {
     var title by rememberSaveable { mutableStateOf(chore?.title ?: "") }
@@ -130,10 +130,10 @@ fun ChoreEditor(state: FamilyState, chore: ChoreRecord?, formats: Formats, local
     var often by rememberSaveable { mutableStateOf(initialOften) }
     var days by remember { mutableStateOf((chore?.recurrence as? Recurrence.Weekdays)?.days ?: setOf(DayOfWeek.SATURDAY)) }
     Column(Modifier.fillMaxSize().background(Hp.colors.ground).imePadding()) {
-        TopBar(if (chore == null) "New job" else "Edit job", onBack)
+        TopBar(if (chore == null) "New activity" else "Edit activity", onBack)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.xl)) {
             Field("What", title, { title = it }, placeholder = "e.g. Put the bins out")
-            IconGrid(JOB_ICONS, icon) { icon = it }
+            IconGrid(ACTIVITY_ICONS, icon) { icon = it }
             Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
                 Text("Kind", style = Hp.type.label, color = Hp.colors.inkMuted)
                 Segmented(listOf(ChoreKind.EXPECTED to "Unpaid", ChoreKind.ASSIGNED to "Paid", ChoreKind.BOUNTY to "Bounty"), kind, { kind = it })
@@ -141,7 +141,7 @@ fun ChoreEditor(state: FamilyState, chore: ChoreRecord?, formats: Formats, local
                     when (kind) {
                         ChoreKind.EXPECTED -> "Everyone does these because they live here. Ticked off, never paid."
                         ChoreKind.ASSIGNED -> "Belongs to particular children and earns points each time it's due."
-                        ChoreKind.BOUNTY -> "An extra job anyone can do. Paid every time it's done."
+                        ChoreKind.BOUNTY -> "An extra activity anyone can do. Paid every time it's done."
                     },
                     style = Hp.type.caption, color = Hp.colors.inkMuted,
                 )
@@ -188,11 +188,11 @@ fun ChoreEditor(state: FamilyState, chore: ChoreRecord?, formats: Formats, local
                 }
             }
             if (chore != null) {
-                QuietButton("Remove this job", { perform(FamilyActions.archiveChore(chore.id)); onBack() }, modifier = Modifier.fillMaxWidth())
+                QuietButton("Remove this activity", { perform(FamilyActions.archiveChore(chore.id)); onBack() }, modifier = Modifier.fillMaxWidth())
             }
         }
         OutcomeButton(
-            if (chore == null) "Add this job" else "Save changes",
+            if (chore == null) "Add this activity" else "Save changes",
             enabled = title.isNotBlank() && (kind == ChoreKind.BOUNTY || who.isNotEmpty()),
             onClick = {
                 val recurrence = when {
@@ -214,5 +214,5 @@ fun ChoreEditor(state: FamilyState, chore: ChoreRecord?, formats: Formats, local
     }
 }
 
-private val JOB_ICONS = listOf("bin", "dishes", "bed", "toys", "plant", "car", "laundry", "table", "broom", "shirt", "dog", "book", "pencil", "music", "bike", "star")
+private val ACTIVITY_ICONS = listOf("bin", "dishes", "bed", "toys", "plant", "car", "laundry", "table", "broom", "shirt", "dog", "book", "pencil", "music", "bike", "star")
 private const val POINT_STEP = 5L

@@ -3,7 +3,7 @@
 [![CI](https://github.com/swiftugandan/house-points/actions/workflows/ci.yml/badge.svg)](https://github.com/swiftugandan/house-points/actions/workflows/ci.yml)
 
 A family bank that lives on the parents' Android phones.
-- Children earn points for jobs and for behaviour that reflects the family's values.
+- Children earn points for activities and for behaviour that reflects the family's values.
 - Points earn weekly interest on the smallest balance held all week.
 - Points can be cashed out for real money, which a parent hands over.
 

@@ -10,9 +10,9 @@ object Refusals {
         Refusal.NoChildSelected -> "Choose who this is for."
         Refusal.AmountMustBePositive -> "The amount needs to be more than zero."
         Refusal.AmountMustNotBeZero -> "The amount can't be zero."
-        Refusal.UnknownChore -> "That job no longer exists."
+        Refusal.UnknownChore -> "That activity no longer exists."
         Refusal.AlreadyReversed -> "This entry has already been reversed."
-        Refusal.AlreadyRecorded -> "That job is already recorded for that day."
+        Refusal.AlreadyRecorded -> "That activity is already recorded for that day."
         Refusal.LockHasReturns -> "This lock's points have already come back. Reverse the lock itself to undo both together."
         Refusal.InvalidPolicy -> "Those numbers don't make a valid rule."
         is Refusal.Rule -> when (refusal.reason) {

@@ -31,7 +31,7 @@ import dev.housepoints.app.family.FamilyViewModel
 import dev.housepoints.app.family.Outcome
 import dev.housepoints.app.ui.format.Formats
 import dev.housepoints.app.ui.onboarding.AddChildrenScreen
-import dev.housepoints.app.ui.onboarding.StarterJobsScreen
+import dev.housepoints.app.ui.onboarding.StarterActivitiesScreen
 import dev.housepoints.app.ui.record.RecordSheet
 import dev.housepoints.app.ui.record.RecordTab
 import dev.housepoints.app.ui.theme.Hp
@@ -52,7 +52,7 @@ fun AppNavigation(graph: AppGraph, family: FamilyViewModel, snapshot: FamilySnap
     }
 }
 
-/** Finishes setup on this phone (name, children, starter jobs) before the family screens appear. */
+/** Finishes setup on this phone (name, children, starter activities) before the family screens appear. */
 @Composable
 private fun SetupGate(graph: AppGraph, family: FamilyViewModel, state: FamilyState, content: @Composable () -> Unit) {
     // A phone that joined by pairing code names itself once the family has arrived.
@@ -63,7 +63,7 @@ private fun SetupGate(graph: AppGraph, family: FamilyViewModel, state: FamilySta
         }
     }
     var childrenDone by remember { mutableStateOf(graph.prefs.childrenStepDone) }
-    var starterOffered by remember { mutableStateOf(graph.prefs.starterJobsOffered) }
+    var starterOffered by remember { mutableStateOf(graph.prefs.starterActivitiesOffered) }
     when {
         state.children.none { !it.archived } || !childrenDone -> AddChildrenScreen(
             state,
@@ -76,10 +76,10 @@ private fun SetupGate(graph: AppGraph, family: FamilyViewModel, state: FamilySta
         )
         !starterOffered && state.chores.isEmpty() -> {
             fun offered() {
-                graph.prefs.starterJobsOffered = true
+                graph.prefs.starterActivitiesOffered = true
                 starterOffered = true
             }
-            StarterJobsScreen(
+            StarterActivitiesScreen(
                 state,
                 onDone = { actions ->
                     family.perform(Action.Record(actions.flatMap { (it as? Action.Record)?.payloads.orEmpty() }))

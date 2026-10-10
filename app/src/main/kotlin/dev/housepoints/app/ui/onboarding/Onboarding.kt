@@ -70,7 +70,7 @@ fun WelcomeScreen(onStart: () -> Unit, onJoin: () -> Unit) {
         Spacer(Modifier.weight(1f))
         Text("House Points", style = Hp.type.display, color = Hp.colors.ink, modifier = Modifier.semantics { heading() })
         Text(
-            "A family bank on your phone. Children earn points for jobs and for the way they treat people. " +
+            "A family bank on your phone. Children earn points for activities and for the way they treat people. " +
                 "Points grow with interest while they are left alone, and can be swapped for real money.",
             style = Hp.type.body, color = Hp.colors.inkMuted,
         )
@@ -182,7 +182,7 @@ fun AddChildrenScreen(state: FamilyState, onAdd: (Action) -> Unit, onNext: () ->
                     Text("Their view", style = Hp.type.label, color = Hp.colors.inkMuted)
                     Segmented(listOf(DisplayStyle.PICTURE to "Pictures", DisplayStyle.NUMBER to "Numbers"), style, { style = it })
                     Text(
-                        if (style == DisplayStyle.PICTURE) "A jar of coins and pictures for jobs. For children still learning to read, roughly 5 to 8."
+                        if (style == DisplayStyle.PICTURE) "A jar of coins and pictures for activities. For children still learning to read, roughly 5 to 8."
                         else "Real figures, the full history and \"what if I wait?\". Roughly 9 and up.",
                         style = Hp.type.caption, color = Hp.colors.inkMuted,
                     )
@@ -200,32 +200,32 @@ fun AddChildrenScreen(state: FamilyState, onAdd: (Action) -> Unit, onNext: () ->
     }
 }
 
-data class StarterJob(val title: String, val icon: String, val kind: ChoreKind, val points: Long, val recurrence: Recurrence, val note: String)
+data class StarterActivity(val title: String, val icon: String, val kind: ChoreKind, val points: Long, val recurrence: Recurrence, val note: String)
 
-private val STARTER_JOBS = listOf(
-    StarterJob("Make your bed", "bed", ChoreKind.EXPECTED, 0, Recurrence.Daily, "Every day, unpaid"),
-    StarterJob("Clear your plate", "table", ChoreKind.EXPECTED, 0, Recurrence.Daily, "Every day, unpaid"),
-    StarterJob("Empty the dishwasher", "dishes", ChoreKind.ASSIGNED, 15, Recurrence.Daily, "Every day, 15 points"),
-    StarterJob("Put the bins out", "bin", ChoreKind.ASSIGNED, 20, Recurrence.Weekly, "Once a week, 20 points"),
-    StarterJob("Tidy your room", "toys", ChoreKind.ASSIGNED, 25, Recurrence.Weekly, "Once a week, 25 points"),
-    StarterJob("Wash the car", "car", ChoreKind.BOUNTY, 150, Recurrence.Once, "Bounty job, 150 points"),
+private val STARTER_ACTIVITIES = listOf(
+    StarterActivity("Make your bed", "bed", ChoreKind.EXPECTED, 0, Recurrence.Daily, "Every day, unpaid"),
+    StarterActivity("Clear your plate", "table", ChoreKind.EXPECTED, 0, Recurrence.Daily, "Every day, unpaid"),
+    StarterActivity("Empty the dishwasher", "dishes", ChoreKind.ASSIGNED, 15, Recurrence.Daily, "Every day, 15 points"),
+    StarterActivity("Put the bins out", "bin", ChoreKind.ASSIGNED, 20, Recurrence.Weekly, "Once a week, 20 points"),
+    StarterActivity("Tidy your room", "toys", ChoreKind.ASSIGNED, 25, Recurrence.Weekly, "Once a week, 25 points"),
+    StarterActivity("Wash the car", "car", ChoreKind.BOUNTY, 150, Recurrence.Once, "Bounty activity, 150 points"),
 )
 
-/** Suggested jobs, all switched on, assigned to every child; editable later in Settings, Jobs. */
+/** Suggested activities, all switched on, assigned to every child; editable later in Settings, Activities. */
 @Composable
-fun StarterJobsScreen(state: FamilyState, onDone: (List<Action>) -> Unit, onSkip: () -> Unit) {
-    var chosen by rememberSaveable { mutableStateOf(STARTER_JOBS.indices.toList()) }
+fun StarterActivitiesScreen(state: FamilyState, onDone: (List<Action>) -> Unit, onSkip: () -> Unit) {
+    var chosen by rememberSaveable { mutableStateOf(STARTER_ACTIVITIES.indices.toList()) }
     val everyone = state.children.filter { !it.archived }.map { it.id }.toSet()
     Column(Modifier.fillMaxSize().background(Hp.colors.ground)) {
         Column(Modifier.weight(1f).statusBarsPadding().verticalScroll(rememberScrollState())) {
-            Text("Starter jobs", style = Hp.type.headline, color = Hp.colors.ink, modifier = Modifier.padding(Space.l).semantics { heading() })
+            Text("Starter activities", style = Hp.type.headline, color = Hp.colors.ink, modifier = Modifier.padding(Space.l).semantics { heading() })
             Text(
-                "Unpaid jobs are things everyone does because they live here. Paid jobs earn points. Bounty jobs are extras anyone can do.",
+                "Unpaid activities are things everyone does because they live here. Paid activities earn points. Bounty activities are extras anyone can do.",
                 style = Hp.type.body, color = Hp.colors.inkMuted, modifier = Modifier.padding(horizontal = Space.l),
             )
             Spacer(Modifier.size(Space.l))
             Rule()
-            STARTER_JOBS.forEachIndexed { index, job ->
+            STARTER_ACTIVITIES.forEachIndexed { index, activity ->
                 val on = index in chosen
                 Row(
                     Modifier.fillMaxWidth().heightIn(min = 64.dp).background(Hp.colors.surface)
@@ -233,11 +233,11 @@ fun StarterJobsScreen(state: FamilyState, onDone: (List<Action>) -> Unit, onSkip
                         .padding(horizontal = Space.l),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(HpIcons.of(IconKey(job.icon)), contentDescription = null, tint = Hp.colors.ink, modifier = Modifier.size(28.dp))
+                    Icon(HpIcons.of(IconKey(activity.icon)), contentDescription = null, tint = Hp.colors.ink, modifier = Modifier.size(28.dp))
                     Spacer(Modifier.width(Space.m))
                     Column(Modifier.weight(1f)) {
-                        Text(job.title, style = Hp.type.title.copy(fontSize = Hp.type.body.fontSize), color = Hp.colors.ink)
-                        Text(job.note, style = Hp.type.caption, color = Hp.colors.inkMuted)
+                        Text(activity.title, style = Hp.type.title.copy(fontSize = Hp.type.body.fontSize), color = Hp.colors.ink)
+                        Text(activity.note, style = Hp.type.caption, color = Hp.colors.inkMuted)
                     }
                     if (on) DoneBadge(size = 26.dp) else Spacer(Modifier.size(26.dp))
                 }
@@ -246,13 +246,13 @@ fun StarterJobsScreen(state: FamilyState, onDone: (List<Action>) -> Unit, onSkip
             TextAction("Skip for now", onSkip, modifier = Modifier.padding(Space.s))
         }
         OutcomeButton(
-            if (chosen.isEmpty()) "Continue without jobs" else "Add ${chosen.size} jobs",
+            when (chosen.size) { 0 -> "Continue without activities"; 1 -> "Add 1 activity"; else -> "Add ${chosen.size} activities" },
             onClick = {
                 onDone(
-                    chosen.sorted().map { STARTER_JOBS[it] }.map { job ->
+                    chosen.sorted().map { STARTER_ACTIVITIES[it] }.map { activity ->
                         FamilyActions.saveChore(
-                            null, job.title, IconKey(job.icon), job.kind, Points(job.points),
-                            if (job.kind == ChoreKind.BOUNTY) emptySet() else everyone, job.recurrence,
+                            null, activity.title, IconKey(activity.icon), activity.kind, Points(activity.points),
+                            if (activity.kind == ChoreKind.BOUNTY) emptySet() else everyone, activity.recurrence,
                         )
                     },
                 )

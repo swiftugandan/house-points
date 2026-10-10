@@ -49,7 +49,7 @@ internal fun OnboardingFlow(graph: AppGraph, family: FamilyViewModel) {
         }
         graph.prefs.pendingPhoneName = phoneName.trim()
         graph.prefs.childrenStepDone = true
-        graph.prefs.starterJobsOffered = true
+        graph.prefs.starterActivitiesOffered = true
         scope.launch { graph.store(decoded.first, decoded.second) }
     }
     NavHost(nav, startDestination = "welcome") {

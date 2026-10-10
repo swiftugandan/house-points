@@ -107,7 +107,7 @@ fun HomeScreen(
                     ) {
                         Icon(HpIcons.of(IconKey("car")), contentDescription = null, tint = colors.ink, modifier = Modifier.size(24.dp))
                         Spacer(Modifier.width(Space.m))
-                        val label = if (model.bountyCount == 1) "1 open bounty job" else "${model.bountyCount} open bounty jobs"
+                        val label = if (model.bountyCount == 1) "1 open bounty activity" else "${model.bountyCount} open bounty activities"
                         Text(label, style = Hp.type.body, color = colors.ink, modifier = Modifier.weight(1f))
                         Icon(HpIcons.ChevronRight, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(20.dp))
                     }

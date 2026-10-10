@@ -241,7 +241,7 @@ private fun ChoreDetail(
     val chores = state.chores.filter { !it.archived && it.kind != ChoreKind.EXPECTED }
     var choreId by remember { mutableStateOf<ChoreId?>(null) }
     if (chores.isEmpty()) {
-        Text("No paid jobs yet. Add them in Settings, Jobs.", style = Hp.type.body, color = Hp.colors.inkMuted)
+        Text("No paid activities yet. Add them in Settings, Activities.", style = Hp.type.body, color = Hp.colors.inkMuted)
         return
     }
     Column {
@@ -258,7 +258,7 @@ private fun ChoreDetail(
                 Spacer(Modifier.width(Space.m))
                 Column(Modifier.weight(1f)) {
                     Text(chore.title, style = if (isOn) Hp.type.title.copy(fontSize = Hp.type.body.fontSize) else Hp.type.body, color = Hp.colors.ink)
-                    if (chore.kind == ChoreKind.BOUNTY) Text("Bounty job", style = Hp.type.caption, color = Hp.colors.inkMuted)
+                    if (chore.kind == ChoreKind.BOUNTY) Text("Bounty activity", style = Hp.type.caption, color = Hp.colors.inkMuted)
                 }
                 Text(formats.points(chore.points), style = Hp.type.figure, color = Hp.colors.ink)
             }
@@ -266,7 +266,7 @@ private fun ChoreDetail(
     }
     RefusalText(refusal)
     val chore = chores.firstOrNull { it.id == choreId }
-    val label = if (chore == null || selected.isEmpty()) "Choose a job" else {
+    val label = if (chore == null || selected.isEmpty()) "Choose an activity" else {
         val each = if (selected.size > 1) " each" else ""
         "Add ${formats.points(chore.points)}$each to ${names(state, selected)}"
     }

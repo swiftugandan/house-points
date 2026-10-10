@@ -155,7 +155,7 @@ class AppPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_CHILDREN_DONE, false)
         set(value) = prefs.edit().putBoolean(KEY_CHILDREN_DONE, value).apply()
 
-    var starterJobsOffered: Boolean
+    var starterActivitiesOffered: Boolean
         get() = prefs.getBoolean(KEY_STARTER, false)
         set(value) = prefs.edit().putBoolean(KEY_STARTER, value).apply()
 

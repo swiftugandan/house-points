@@ -58,7 +58,7 @@ import dev.housepoints.ledger.ValueRecord
 
 enum class SettingsPage(val title: String, val detail: String, val icon: () -> ImageVector) {
     CHILDREN("Children", "Names, colours and how each one sees their account", { HpIcons.of(IconKey("people")) }),
-    JOBS("Jobs", "Paid, unpaid and bounty jobs", { HpIcons.of(IconKey("bin")) }),
+    ACTIVITIES("Activities", "Paid, unpaid and bounty activities", { HpIcons.of(IconKey("bin")) }),
     VALUES("Family values", "What behaviour awards are for", { HpIcons.of(IconKey("heart")) }),
     REWARDS("Rewards shop", "Treats children can spend points on", { HpIcons.of(IconKey("gift")) }),
     MONEY("Money rules", "Interest, exchange rate, taking points away", { HpIcons.of(IconKey("star")) }),

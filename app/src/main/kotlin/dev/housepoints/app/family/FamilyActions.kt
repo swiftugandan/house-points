@@ -155,7 +155,7 @@ object FamilyActions {
         ),
     )
 
-    /** A bounty job (or any chore done outside its schedule): a fresh id, so repeats are separate entries. */
+    /** A bounty activity (or any chore done outside its schedule): a fresh id, so repeats are separate entries. */
     fun recordBounty(state: FamilyState, children: Set<ChildId>, chore: ChoreId, now: InstantMs): Action {
         val record = state.chore(chore) ?: return Action.Refused(Refusal.UnknownChore)
         if (children.isEmpty()) return Action.Refused(Refusal.NoChildSelected)

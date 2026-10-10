@@ -59,7 +59,7 @@ private fun ChildHeader(model: ChildViewModel, onExit: () -> Unit) {
     }
 }
 
-/** DESIGN.md "Child view: Picture style": the jar, one sentence read aloud on tap, today's jobs. No other text. */
+/** DESIGN.md "Child view: Picture style": the jar, one sentence read aloud on tap, today's activities. No other text. */
 @Composable
 fun PictureView(model: ChildViewModel, animate: Boolean, onSpeak: (String) -> Unit, onExit: () -> Unit) {
     val colour = Hp.colors.child(model.colorIndex)
@@ -85,17 +85,17 @@ fun PictureView(model: ChildViewModel, animate: Boolean, onSpeak: (String) -> Un
                 contentPadding = PaddingValues(Space.l),
                 horizontalArrangement = Arrangement.spacedBy(Space.m),
             ) {
-                items(model.today) { job ->
-                    Box(Modifier.size(72.dp).semantics { contentDescription = job.title + if (job.done) ": done" else ": not yet" }) {
+                items(model.today) { activity ->
+                    Box(Modifier.size(72.dp).semantics { contentDescription = activity.title + if (activity.done) ": done" else ": not yet" }) {
                         Box(
                             Modifier.size(72.dp).clip(CircleShape)
-                                .background(if (job.done) Hp.colors.ground else Hp.colors.surface)
-                                .border(if (job.done) 1.dp else 2.dp, if (job.done) Hp.colors.rule else Hp.colors.inkMuted, CircleShape),
+                                .background(if (activity.done) Hp.colors.ground else Hp.colors.surface)
+                                .border(if (activity.done) 1.dp else 2.dp, if (activity.done) Hp.colors.rule else Hp.colors.inkMuted, CircleShape),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Icon(HpIcons.of(job.icon), contentDescription = null, tint = Hp.colors.ink, modifier = Modifier.size(40.dp))
+                            Icon(HpIcons.of(activity.icon), contentDescription = null, tint = Hp.colors.ink, modifier = Modifier.size(40.dp))
                         }
-                        if (job.done) DoneBadge(Modifier.align(Alignment.BottomEnd))
+                        if (activity.done) DoneBadge(Modifier.align(Alignment.BottomEnd))
                     }
                 }
             }
@@ -163,7 +163,7 @@ fun NumberView(model: ChildViewModel, afterWeeks: (Int) -> Points, formatPoints:
                         Text("Of which interest", style = Hp.type.body, color = Hp.colors.interest, modifier = Modifier.weight(1f))
                         Text("+" + formatPoints(gained), style = Hp.type.figureStrong, color = Hp.colors.interest)
                     }
-                    Text("This counts interest only, not new jobs. ${model.interestExplanation}", style = Hp.type.caption, color = Hp.colors.inkMuted)
+                    Text("This counts interest only, not new activities. ${model.interestExplanation}", style = Hp.type.caption, color = Hp.colors.inkMuted)
                 }
             }
             if (model.recent.isNotEmpty()) {

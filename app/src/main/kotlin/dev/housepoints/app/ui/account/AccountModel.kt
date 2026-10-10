@@ -101,7 +101,7 @@ object AccountModels {
         val (title, note, kind) = when (entry.kind) {
             EntryKind.CHORE -> {
                 val chore = entry.chore?.let { state.chore(it.choreId) }
-                Triple(chore?.title ?: "Job", if (chore?.kind == ChoreKind.BOUNTY) "Bounty job" else null, LedgerRowKind.NORMAL)
+                Triple(chore?.title ?: "Activity", if (chore?.kind == ChoreKind.BOUNTY) "Bounty activity" else null, LedgerRowKind.NORMAL)
             }
             EntryKind.AWARD -> Triple(
                 "Award" + (entry.valueId?.let { state.value(it) }?.let { " · ${it.name}" } ?: ""), entry.note, LedgerRowKind.NORMAL,

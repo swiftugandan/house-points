@@ -35,14 +35,14 @@ data class ChildViewModel(
     val goalFraction: Float,
     val atPace: String?,
     val interestOnly: String?,
-    val today: List<TodayJob>,
+    val today: List<TodayActivity>,
     val recent: List<LedgerRowModel>,
     val interestExplanation: String,
     /** SPEC FR-53: what is locked away and when it comes back; null with nothing locked. */
     val lockedLine: String?,
 )
 
-data class TodayJob(val title: String, val icon: IconKey, val done: Boolean)
+data class TodayActivity(val title: String, val icon: IconKey, val done: Boolean)
 
 object ChildViews {
     private const val RECENT_ROWS = 5
@@ -71,7 +71,7 @@ object ChildViews {
             goalFraction = goal?.let { if (it.target.value <= 0) 1f else (balance.value.toFloat() / it.target.value).coerceIn(0f, 1f) } ?: 0f,
             atPace = goal?.let { describe(Projections.toTarget(state, child, it.target, Pace.RECENT), formats) },
             interestOnly = goal?.let { describe(Projections.toTarget(state, child, it.target, Pace.INTEREST_ONLY), formats) },
-            today = todayJobs(state, child, today),
+            today = todayActivities(state, child, today),
             recent = account?.lines.orEmpty().take(RECENT_ROWS).map { AccountModels.lineModel(state, it, formats) },
             lockedLine = lockedLine(state, child, formats),
             interestExplanation = interest?.let {
@@ -101,7 +101,7 @@ object ChildViews {
     }
 
     private fun coinsSentence(jar: JarModel, balance: Points): String = when {
-        balance.value <= 0 -> "Your jar is empty. Jobs fill it up."
+        balance.value <= 0 -> "Your jar is empty. Activities fill it up."
         jar.coinValue > 10 && jar.coins > 0 -> "You have ${jar.coins} big coins. Each big coin is ${jar.coinValue} points."
         jar.coins == 0 -> "You have a bit of a coin. Ten points make a coin."
         jar.partial -> "You have ${jar.coins} ${if (jar.coins == 1) "coin" else "coins"} and a bit."
@@ -116,16 +116,16 @@ object ChildViews {
         ProjectionResult.NotYet -> "After your first full week"
     }
 
-    /** Today's jobs: assigned ones that apply today (done or not) and the unpaid every-day ones. */
-    private fun todayJobs(state: FamilyState, child: ChildId, today: LocalDate): List<TodayJob> {
+    /** Today's activities: assigned ones that apply today (done or not) and the unpaid every-day ones. */
+    private fun todayActivities(state: FamilyState, child: ChildId, today: LocalDate): List<TodayActivity> {
         val due = Chores.dueFor(state, child, today).filter { it.occurrence == today }
         val doneToday = state.account(child)?.lines.orEmpty()
             .filter { it.reversedBy == null && it.entry.kind == EntryKind.CHORE && it.entry.chore?.occurrence == today }
             .mapNotNull { line -> line.entry.chore?.let { state.chore(it.choreId) } }
             .filter { it.kind == ChoreKind.ASSIGNED }
         val expected = Chores.expectedFor(state, child, today)
-        return expected.map { TodayJob(it.chore.title, it.chore.icon, it.done) } +
-            doneToday.map { TodayJob(it.title, it.icon, done = true) } +
-            due.map { TodayJob(it.chore.title, it.chore.icon, done = false) }
+        return expected.map { TodayActivity(it.chore.title, it.chore.icon, it.done) } +
+            doneToday.map { TodayActivity(it.title, it.icon, done = true) } +
+            due.map { TodayActivity(it.chore.title, it.chore.icon, done = false) }
     }
 }

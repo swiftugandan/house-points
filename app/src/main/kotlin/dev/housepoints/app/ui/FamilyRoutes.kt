@@ -38,7 +38,7 @@ import dev.housepoints.app.ui.payday.Statements
 import dev.housepoints.app.ui.record.RecordTab
 import dev.housepoints.app.ui.settings.ChildrenSettings
 import dev.housepoints.app.ui.settings.ChoreEditor
-import dev.housepoints.app.ui.settings.JobsSettings
+import dev.housepoints.app.ui.settings.ActivitiesSettings
 import dev.housepoints.app.ui.settings.MoneyRules
 import dev.housepoints.app.ui.settings.RewardsSettings
 import dev.housepoints.app.ui.settings.SettingsScreen
@@ -91,7 +91,7 @@ internal object Routes {
     fun account(child: ChildId) = "account/$child"
     fun payday(child: ChildId, week: LocalDate) = "payday/$child/$week"
     fun settings(page: String) = "settings/$page"
-    fun editChore(chore: ChoreId?) = "settings/jobs/edit?chore=${chore ?: ""}"
+    fun editChore(chore: ChoreId?) = "settings/activities/edit?chore=${chore ?: ""}"
 }
 
 internal fun NavGraphBuilder.familyDestinations(f: FamilyScope) {
@@ -128,10 +128,10 @@ private fun NavGraphBuilder.settingsDestinations(f: FamilyScope) {
             ChildrenSettings(f.state, onBack = f::back, onAdd = { adding = true }, perform = { f.family.perform(it) })
         }
     }
-    composable(Routes.settings("jobs")) {
-        JobsSettings(f.state, f.formats, f.locale, onBack = f::back, onEdit = { f.nav.navigate(Routes.editChore(it)) })
+    composable(Routes.settings("activities")) {
+        ActivitiesSettings(f.state, f.formats, f.locale, onBack = f::back, onEdit = { f.nav.navigate(Routes.editChore(it)) })
     }
-    composable("settings/jobs/edit?${Routes.CHORE_ARG}={${Routes.CHORE_ARG}}") { entry ->
+    composable("settings/activities/edit?${Routes.CHORE_ARG}={${Routes.CHORE_ARG}}") { entry ->
         val chore = entry.arguments?.getString(Routes.CHORE_ARG)?.takeIf { it.isNotBlank() }?.let { f.state.chore(ChoreId(UUID.fromString(it))) }
         ChoreEditor(f.state, chore, f.formats, f.locale, onBack = f::back, perform = { f.family.perform(it) })
     }
