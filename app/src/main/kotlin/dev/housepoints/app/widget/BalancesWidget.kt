@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -214,7 +215,7 @@ class BalancesWidget : GlanceAppWidget() {
         val SMALL_DISC = 26.dp
         val RECORD = 36.dp
 
-        val ON_DISC = ColorProvider(android.R.color.white)
+        val ON_DISC = ColorProvider(Color.White)
 
         /** Tokens.kt children fills, in order. */
         val DISCS = listOf(
